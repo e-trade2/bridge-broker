@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All Listings — Bridge Broker</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .listings-page { padding-top: 68px; min-height: 100vh; }
+    .listings-page-layout { display: grid; grid-template-columns: 260px 1fr; gap: 32px; padding: 40px 0; }
+    .filter-sidebar { position: sticky; top: 88px; height: fit-content; }
+    .filter-card { background: var(--charcoal-mid); border: 1px solid rgba(255,255,255,0.07); border-radius: var(--radius-md); padding: 20px; margin-bottom: 16px; }
+    .filter-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--gray-400); margin-bottom: 14px; }
+    .filter-option { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer; font-size: 14px; }
+    .filter-option input[type=checkbox] { accent-color: var(--teal); width: 15px; height: 15px; }
+    .price-range { width: 100%; accent-color: var(--teal); }
+    .price-display { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray-400); margin-top: 8px; }
+    .listings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .listings-count { font-size: 14px; color: var(--gray-400); }
+    .sort-select { background: var(--charcoal-mid); border: 1px solid rgba(255,255,255,0.1); color: var(--white); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; outline: none; }
+    @media (max-width: 768px) {
+      .listings-page-layout { grid-template-columns: 1fr; }
+      .filter-sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">🌉</div>
+      <span class="nav-logo-text">Bridge <span>Broker</span></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" data-i18n="nav_home">Home</a></li>
+      <li><a href="listings.html" class="active" data-i18n="nav_listings">Listings</a></li>
+      <li><a href="index.html#how-it-works" data-i18n="nav_about">About</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="am">አማ</button>
+      </div>
+      <button class="btn btn-outline btn-sm" data-modal="loginModal" data-i18n="nav_login">Login</button>
+      <button class="btn btn-primary btn-sm" data-modal="listingModal" data-i18n="nav_post">Post Listing</button>
+    </div>
+  </div>
+</nav>
+
+<div class="listings-page">
+  <div class="container">
+
+    <!-- Page Header -->
+    <div style="padding: 40px 0 0; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 0;">
+      <div class="section-eyebrow">Browse</div>
+      <h1 class="section-title">All Vehicle Listings</h1>
+      <p class="section-subtitle" style="margin-bottom: 24px;">Cars, Motorcycles & Bajajs across Ethiopia</p>
+
+      <!-- Quick search bar -->
+      <div class="search-box" style="margin-bottom: 0; border-radius: var(--radius-sm) var(--radius-sm) 0 0;">
+        <div class="search-field">
+          <label for="pageType">Type</label>
+          <select id="pageType">
+            <option value="">All</option>
+            <option value="car">🚗 Car</option>
+            <option value="motorcycle">🏍️ Motorcycle</option>
+            <option value="bajaj">🛺 Bajaj</option>
+          </select>
+        </div>
+        <div class="search-field">
+          <label for="pageBrand">Brand / Model</label>
+          <input type="text" id="pageBrand" placeholder="Toyota, Haojue..." />
+        </div>
+        <div class="search-field">
+          <label for="pagePrice">Max Price (ETB)</label>
+          <input type="number" id="pagePrice" placeholder="500000" />
+        </div>
+        <div class="search-field">
+          <label for="pageLocation">City</label>
+          <select id="pageLocation">
+            <option value="">All Cities</option>
+            <option>Addis Ababa</option>
+            <option>Adama</option>
+            <option>Hawassa</option>
+            <option>Bahir Dar</option>
+            <option>Dire Dawa</option>
+          </select>
+        </div>
+        <div class="search-field" style="flex:0">
+          <label style="visibility:hidden">Go</label>
+          <button id="searchBtn" class="btn btn-primary" style="width:100%">Search</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="listings-page-layout">
+
+      <!-- FILTER SIDEBAR -->
+      <aside class="filter-sidebar">
+        <div class="filter-card">
+          <div class="filter-title">Vehicle Type</div>
+          <label class="filter-option"><input type="checkbox" checked> All</label>
+          <label class="filter-option"><input type="checkbox"> 🚗 Cars</label>
+          <label class="filter-option"><input type="checkbox"> 🏍️ Motorcycles</label>
+          <label class="filter-option"><input type="checkbox"> 🛺 Bajajs</label>
+        </div>
+        <div class="filter-card">
+          <div class="filter-title">Condition</div>
+          <label class="filter-option"><input type="checkbox" checked> All</label>
+          <label class="filter-option"><input type="checkbox"> Brand New</label>
+          <label class="filter-option"><input type="checkbox"> Locally Used</label>
+          <label class="filter-option"><input type="checkbox"> Bank Seized</label>
+        </div>
+        <div class="filter-card">
+          <div class="filter-title">Price Range (ETB)</div>
+          <input type="range" class="price-range" id="priceRange" min="0" max="3000000" step="50000" value="3000000" oninput="updatePrice(this.value)" />
+          <div class="price-display">
+            <span>0</span>
+            <span id="priceDisplay">3,000,000+</span>
+          </div>
+        </div>
+        <div class="filter-card">
+          <div class="filter-title">Location</div>
+          <label class="filter-option"><input type="checkbox" checked> All Ethiopia</label>
+          <label class="filter-option"><input type="checkbox"> Addis Ababa</label>
+          <label class="filter-option"><input type="checkbox"> Adama</label>
+          <label class="filter-option"><input type="checkbox"> Hawassa</label>
+          <label class="filter-option"><input type="checkbox"> Bahir Dar</label>
+          <label class="filter-option"><input type="checkbox"> Dire Dawa</label>
+        </div>
+        <div class="filter-card">
+          <div class="filter-title">Seller Type</div>
+          <label class="filter-option"><input type="checkbox" checked> All Sellers</label>
+          <label class="filter-option"><input type="checkbox"> ✓ Verified Brokers Only</label>
+          <label class="filter-option"><input type="checkbox"> Private Sellers</label>
+        </div>
+      </aside>
+
+      <!-- LISTINGS RESULTS -->
+      <div>
+        <div class="listings-header">
+          <span class="listings-count">Showing <strong>6</strong> vehicles</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="listings-tabs" style="margin-bottom:0">
+              <button class="tab-btn active" data-filter="all">All</button>
+              <button class="tab-btn" data-filter="featured">⭐ Featured</button>
+              <button class="tab-btn" data-filter="car">Cars</button>
+              <button class="tab-btn" data-filter="motorcycle">Motorcycles</button>
+              <button class="tab-btn" data-filter="bajaj">Bajajs</button>
+            </div>
+            <select class="sort-select">
+              <option>Newest First</option>
+              <option>Price: Low to High</option>
+              <option>Price: High to Low</option>
+              <option>Most Viewed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="listings-grid" id="listingsGrid">
+          <!-- Cards identical structure to homepage -->
+          <article class="listing-card featured" data-type="car" data-brand="toyota vitz" data-price="1250000" data-location="addis" data-id="001" data-featured="true">
+            <div class="listing-img">🚗<div class="listing-condition">Locally Used</div></div>
+            <div class="listing-body">
+              <div class="listing-type">🚗 Car</div>
+              <h3 class="listing-name">Toyota Vitz 2015</h3>
+              <div class="listing-meta"><span>📍 Addis Ababa</span><span>⚙️ Auto</span><span>🛣️ 58,000 km</span></div>
+              <div class="listing-footer">
+                <div class="listing-price">1,250,000<small>ETB</small></div>
+                <div class="listing-contact">
+                  <button class="contact-btn wishlist-btn">🤍</button>
+                  <a href="tel:+251900000001" class="contact-btn">📞</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                </div>
+              </div>
+              <div class="listing-seller"><div class="seller-avatar">A</div>Abebe Kebede &nbsp;<span class="verified-badge">✓ Verified</span></div>
+            </div>
+          </article>
+
+          <article class="listing-card" data-type="bajaj" data-brand="tvs king" data-price="185000" data-location="adama" data-id="002" data-featured="false">
+            <div class="listing-img">🛺<div class="listing-condition">Brand New</div></div>
+            <div class="listing-body">
+              <div class="listing-type">🛺 Bajaj</div>
+              <h3 class="listing-name">TVS King Bajaj 2024</h3>
+              <div class="listing-meta"><span>📍 Adama</span><span>⛽ Petrol</span><span>🛣️ 0 km</span></div>
+              <div class="listing-footer">
+                <div class="listing-price">185,000<small>ETB</small></div>
+                <div class="listing-contact">
+                  <button class="contact-btn wishlist-btn">🤍</button>
+                  <a href="tel:+251900000002" class="contact-btn">📞</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                </div>
+              </div>
+              <div class="listing-seller"><div class="seller-avatar">R</div>Rode Star Motors &nbsp;<span class="verified-badge">✓ Verified</span></div>
+            </div>
+          </article>
+
+          <article class="listing-card" data-type="motorcycle" data-brand="haojue" data-price="95000" data-location="hawassa" data-id="003" data-featured="false">
+            <div class="listing-img">🏍️<div class="listing-condition">Locally Used</div></div>
+            <div class="listing-body">
+              <div class="listing-type">🏍️ Motorcycle</div>
+              <h3 class="listing-name">Haojue HJ150-23 2022</h3>
+              <div class="listing-meta"><span>📍 Hawassa</span><span>⛽ Petrol</span><span>🛣️ 22,000 km</span></div>
+              <div class="listing-footer">
+                <div class="listing-price">95,000<small>ETB</small></div>
+                <div class="listing-contact">
+                  <button class="contact-btn wishlist-btn">🤍</button>
+                  <a href="tel:+251900000003" class="contact-btn">📞</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                </div>
+              </div>
+              <div class="listing-seller"><div class="seller-avatar">T</div>Tigist Alemu</div>
+            </div>
+          </article>
+
+          <article class="listing-card featured" data-type="car" data-brand="suzuki dzire" data-price="980000" data-location="addis" data-id="004" data-featured="true">
+            <div class="listing-img">🚗<div class="listing-condition">Locally Used</div></div>
+            <div class="listing-body">
+              <div class="listing-type">🚗 Car</div>
+              <h3 class="listing-name">Suzuki Dzire 2018</h3>
+              <div class="listing-meta"><span>📍 Addis Ababa</span><span>⚙️ Auto</span><span>🛣️ 41,000 km</span></div>
+              <div class="listing-footer">
+                <div class="listing-price">980,000<small>ETB</small></div>
+                <div class="listing-contact">
+                  <button class="contact-btn wishlist-btn">🤍</button>
+                  <a href="tel:+251900000004" class="contact-btn">📞</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                </div>
+              </div>
+              <div class="listing-seller"><div class="seller-avatar">M</div>Mohammed Ali &nbsp;<span class="verified-badge">✓ Verified</span></div>
+            </div>
+          </article>
+
+          <article class="listing-card" data-type="motorcycle" data-brand="tvs apache" data-price="135000" data-location="adama" data-id="005" data-featured="false">
+            <div class="listing-img">🏍️<div class="listing-condition">Brand New</div></div>
+            <div class="listing-body">
+              <div class="listing-type">🏍️ Motorcycle</div>
+              <h3 class="listing-name">TVS Apache RTR 160 2024</h3>
+              <div class="listing-meta"><span>📍 Adama</span><span>⛽ Petrol</span><span>🛣️ 0 km</span></div>
+              <div class="listing-footer">
+                <div class="listing-price">135,000<small>ETB</small></div>
+                <div class="listing-contact">
+                  <button class="contact-btn wishlist-btn">🤍</button>
+                  <a href="tel:+251900000005" class="contact-btn">📞</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                </div>
+              </div>
+              <div class="listing-seller"><div class="seller-avatar">R</div>Rode Star Motors &nbsp;<span class="verified-badge">✓ Verified</span></div>
+            </div>
+          </article>
+
+          <article class="listing-card" data-type="bajaj" data-brand="bajaj re" data-price="145000" data-location="bahirdar" data-id="006" data-featured="false">
+            <div class="listing-img">🛺<div class="listing-condition">Locally Used</div></div>
+            <div class="listing-body">
+              <div class="listing-type">🛺 Bajaj</div>
+              <h3 class="listing-name">Bajaj RE 4S 2021</h3>
+              <div class="listing-meta"><span>📍 Bahir Dar</span><span>⛽ Petrol</span><span>🛣️ 35,000 km</span></div>
+              <div class="listing-footer">
+                <div class="listing-price">145,000<small>ETB</small></div>
+                <div class="listing-contact">
+                  <button class="contact-btn wishlist-btn">🤍</button>
+                  <a href="tel:+251900000006" class="contact-btn">📞</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                </div>
+              </div>
+              <div class="listing-seller"><div class="seller-avatar">D</div>Dawit Tadesse</div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Chatbot & Modals from main page -->
+<div class="chatbot-trigger">
+  <div class="chatbot-window" id="chatWindow">
+    <div class="chat-header">
+      <div class="chat-avatar">🤖</div>
+      <div class="chat-header-info">
+        <div class="chat-header-name">Delala AI</div>
+        <div class="chat-header-status">● Online</div>
+      </div>
+      <button class="chat-close" id="chatClose">✕</button>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-quick-btns">
+      <button class="quick-btn" data-i18n="quick_car">🚗 Car</button>
+      <button class="quick-btn" data-i18n="quick_moto">🏍️ Motorcycle</button>
+      <button class="quick-btn" data-i18n="quick_bajaj">🛺 Bajaj</button>
+      <button class="quick-btn" data-i18n="quick_budget">💰 My budget</button>
+    </div>
+    <div class="chat-input-area">
+      <input type="text" class="chat-input" id="chatInput" placeholder="Type your message..." />
+      <button class="chat-send" id="chatSend">➤</button>
+    </div>
+  </div>
+  <button class="chat-fab" id="chatFab">🤖<div class="chat-pulse"></div></button>
+  <div class="chat-fab-label">Ask Delala AI</div>
+</div>
+
+<div class="modal-overlay" id="listingModal">
+  <div class="modal">
+    <button class="modal-close">✕</button>
+    <h2 class="modal-title">Post a Vehicle Listing</h2>
+    <p style="color:var(--gray-400);font-size:14px;margin-bottom:16px">Fill in your vehicle details and we'll review within 24 hours.</p>
+    <a href="index.html" class="btn btn-primary" style="display:block;text-align:center;padding:14px">Go to Homepage to Post →</a>
+  </div>
+</div>
+
+<div class="modal-overlay" id="loginModal">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-close">✕</button>
+    <h2 class="modal-title">Login to Bridge Broker</h2>
+    <form id="loginForm" novalidate>
+      <div class="form-group"><label for="loginEmail">Email</label><input type="email" id="loginEmail" placeholder="you@email.com" required /></div>
+      <div class="form-group"><label for="loginPassword">Password</label><input type="password" id="loginPassword" placeholder="••••••••" required /></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px">Login</button>
+    </form>
+  </div>
+</div>
+
+<style>@keyframes slideUp{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}</style>
+<script type="module" src="js/main.js"></script>
+<script>
+function updatePrice(val) {
+  const formatted = parseInt(val).toLocaleString();
+  document.getElementById('priceDisplay').textContent = val >= 3000000 ? '3,000,000+' : formatted + ' ETB';
+}
+</script>
+</body>
+</html>

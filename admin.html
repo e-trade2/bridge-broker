@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel — Bridge Broker</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">🌉</div>
+      <span class="nav-logo-text">Bridge <span>Broker</span> <span style="font-size:11px;background:var(--danger);color:var(--white);padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:700">ADMIN</span></span>
+    </a>
+    <div class="nav-actions">
+      <span style="font-size:13px;color:var(--gray-400)">Logged in as Admin</span>
+      <a href="index.html" class="btn btn-outline btn-sm">View Site</a>
+    </div>
+  </div>
+</nav>
+
+<div class="admin-layout">
+
+  <!-- ADMIN SIDEBAR -->
+  <aside class="admin-sidebar sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Admin</div>
+      <a href="#" class="sidebar-link active">
+        <span class="icon">📊</span> Overview
+      </a>
+      <a href="#" class="sidebar-link" onclick="switchTab('pending')">
+        <span class="icon">⏳</span> Pending Listings
+        <span class="admin-badge">3</span>
+      </a>
+      <a href="#" class="sidebar-link" onclick="switchTab('all-listings')">
+        <span class="icon">📋</span> All Listings
+      </a>
+      <a href="#" class="sidebar-link" onclick="switchTab('users')">
+        <span class="icon">👥</span> Users & Sellers
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Monetization</div>
+      <a href="#" class="sidebar-link" onclick="switchTab('payments')">
+        <span class="icon">💰</span> Payments
+      </a>
+      <a href="#" class="sidebar-link" onclick="switchTab('featured')">
+        <span class="icon">⭐</span> Featured Listings
+      </a>
+      <a href="#" class="sidebar-link">
+        <span class="icon">⚙️</span> Commission Settings
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Security</div>
+      <a href="#" class="sidebar-link">
+        <span class="icon">🚨</span> Fraud Reports
+        <span class="admin-badge">1</span>
+      </a>
+      <a href="#" class="sidebar-link">
+        <span class="icon">🔒</span> Banned Users
+      </a>
+    </div>
+  </aside>
+
+  <!-- ADMIN MAIN -->
+  <main class="dashboard-main">
+
+    <!-- OVERVIEW -->
+    <div id="tab-overview">
+      <div class="dash-header">
+        <h1 class="dash-title">Admin Overview</h1>
+        <p class="dash-subtitle">Platform health snapshot — updated live</p>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-label">Total Listings</div>
+          <div class="stat-card-value">342</div>
+          <div class="stat-card-change">↑ 12 this week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Pending Review</div>
+          <div class="stat-card-value" style="color:var(--gold)">3</div>
+          <div class="stat-card-change" style="color:var(--gold)">Needs attention</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Revenue (ETB)</div>
+          <div class="stat-card-value">12,400</div>
+          <div class="stat-card-change">↑ 2,200 this month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Active Sellers</div>
+          <div class="stat-card-value">87</div>
+          <div class="stat-card-change">↑ 5 this week</div>
+        </div>
+      </div>
+
+      <!-- Quick revenue breakdown -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
+        <div class="stat-card" style="border-color:rgba(245,166,35,0.3)">
+          <div class="stat-card-label">Featured Listing Fees</div>
+          <div class="stat-card-value" style="color:var(--gold)">8,200 ETB</div>
+          <div class="stat-card-change">41 featured slots sold</div>
+        </div>
+        <div class="stat-card" style="border-color:rgba(0,201,167,0.3)">
+          <div class="stat-card-label">Verified Badge Subs</div>
+          <div class="stat-card-value" style="color:var(--teal)">4,200 ETB</div>
+          <div class="stat-card-change">14 active subscriptions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Pending Payouts</div>
+          <div class="stat-card-value">0 ETB</div>
+          <div class="stat-card-change">No pending payouts</div>
+        </div>
+      </div>
+
+      <!-- PENDING LISTINGS -->
+      <div class="table-card" style="margin-bottom:20px">
+        <div class="table-card-header">
+          <h2 class="table-card-title">⏳ Pending Listings — Needs Review</h2>
+          <span class="admin-badge" style="font-size:13px;padding:4px 10px">3 pending</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Vehicle</th>
+                <th>Seller</th>
+                <th>Price (ETB)</th>
+                <th>Location</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="pendingTable">
+              <tr data-id="p1">
+                <td><strong>Haojue HJ125 2023</strong> — Motorcycle</td>
+                <td>Sinx (Rode Star Motors) <span class="verified-badge">✓</span></td>
+                <td>88,000</td>
+                <td>Adama</td>
+                <td>2h ago</td>
+                <td style="display:flex;gap:6px;padding:14px 16px">
+                  <button class="btn btn-sm btn-primary" onclick="approveListing('p1')">✓ Approve</button>
+                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="rejectListing('p1')">✕ Reject</button>
+                </td>
+              </tr>
+              <tr data-id="p2">
+                <td><strong>Toyota Corolla 2016</strong> — Car</td>
+                <td>Dawit Tadesse</td>
+                <td>1,100,000</td>
+                <td>Addis Ababa</td>
+                <td>5h ago</td>
+                <td style="display:flex;gap:6px;padding:14px 16px">
+                  <button class="btn btn-sm btn-primary" onclick="approveListing('p2')">✓ Approve</button>
+                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="rejectListing('p2')">✕ Reject</button>
+                </td>
+              </tr>
+              <tr data-id="p3">
+                <td><strong>Bajaj RE 4S 2020</strong> — Bajaj</td>
+                <td>Unknown Seller</td>
+                <td style="color:var(--danger)">12,000 ⚠️</td>
+                <td>Dire Dawa</td>
+                <td>8h ago</td>
+                <td style="display:flex;gap:6px;padding:14px 16px">
+                  <button class="btn btn-sm btn-primary" onclick="approveListing('p3')">✓ Approve</button>
+                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="rejectListing('p3')">✕ Reject</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ALL LISTINGS QUICK VIEW -->
+      <div class="table-card">
+        <div class="table-card-header">
+          <h2 class="table-card-title">All Active Listings</h2>
+          <input type="text" placeholder="Search listings..." style="background:var(--charcoal-light);border:1px solid rgba(255,255,255,0.1);color:var(--white);padding:7px 12px;border-radius:6px;font-size:13px;outline:none" />
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Vehicle</th>
+                <th>Type</th>
+                <th>Seller</th>
+                <th>Price (ETB)</th>
+                <th>Views</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Toyota Vitz 2015</strong></td>
+                <td>🚗 Car</td>
+                <td>Abebe Kebede <span class="verified-badge">✓</span></td>
+                <td>1,250,000</td>
+                <td>134</td>
+                <td><span class="status-badge status-active">Featured</span></td>
+                <td>
+                  <button class="btn btn-sm btn-outline" onclick="showToast('View listing details')">View</button>
+                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white);padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:13px" onclick="showToast('Listing removed!')">Remove</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>TVS King Bajaj 2024</strong></td>
+                <td>🛺 Bajaj</td>
+                <td>Rode Star Motors <span class="verified-badge">✓</span></td>
+                <td>185,000</td>
+                <td>87</td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>
+                  <button class="btn btn-sm btn-outline" onclick="showToast('View listing details')">View</button>
+                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white);padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:13px" onclick="showToast('Listing removed!')">Remove</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Suzuki Dzire 2018</strong></td>
+                <td>🚗 Car</td>
+                <td>Mohammed Ali <span class="verified-badge">✓</span></td>
+                <td>980,000</td>
+                <td>72</td>
+                <td><span class="status-badge status-active">Featured</span></td>
+                <td>
+                  <button class="btn btn-sm btn-outline" onclick="showToast('View listing details')">View</button>
+                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white);padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:13px" onclick="showToast('Listing removed!')">Remove</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Haojue HJ150 2022</strong></td>
+                <td>🏍️ Motorcycle</td>
+                <td>Tigist Alemu</td>
+                <td>95,000</td>
+                <td>45</td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>
+                  <button class="btn btn-sm btn-outline" onclick="showToast('View listing details')">View</button>
+                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white);padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:13px" onclick="showToast('Listing removed!')">Remove</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /tab-overview -->
+
+  </main>
+</div>
+
+<style>
+@keyframes slideUp {
+  from{opacity:0;transform:translate(-50%,20px)}
+  to{opacity:1;transform:translate(-50%,0)}
+}
+</style>
+<script type="module" src="js/main.js"></script>
+<script>
+function switchTab(tab) {
+  showToast(`${tab} tab — coming in next version`);
+}
+
+function approveListing(id) {
+  const row = document.querySelector(`tr[data-id="${id}"]`);
+  if (row) {
+    row.style.opacity = '0.4';
+    row.style.transition = '0.4s';
+    setTimeout(() => row.remove(), 400);
+    showToast('✅ Listing approved and published!');
+    // Update badge count
+    const badge = document.querySelector('.admin-badge');
+    if (badge) {
+      const n = parseInt(badge.textContent) - 1;
+      badge.textContent = n > 0 ? n : '0';
+    }
+  }
+}
+
+function rejectListing(id) {
+  const row = document.querySelector(`tr[data-id="${id}"]`);
+  if (row) {
+    row.style.opacity = '0.4';
+    row.style.transition = '0.4s';
+    setTimeout(() => row.remove(), 400);
+    showToast('✕ Listing rejected and seller notified.');
+  }
+}
+</script>
+</body>
+</html>

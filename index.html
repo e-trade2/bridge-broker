@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Bridge Broker Ethiopia — Buy and sell Cars, Motorcycles, and Bajajs. Ethiopia's trusted vehicle marketplace with AI broker assistant." />
+  <title>Bridge Broker — Ethiopia's Vehicle Marketplace</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2300C9A7'/><text y='24' x='5' font-size='22'>🌉</text></svg>" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     NAVBAR
+══════════════════════════════════════════ -->
+<nav class="navbar" role="navigation" aria-label="Main navigation">
+  <div class="container">
+    <a href="index.html" class="nav-logo" aria-label="Bridge Broker Home">
+      <div class="nav-logo-icon" aria-hidden="true">🌉</div>
+      <span class="nav-logo-text">Bridge <span>Broker</span></span>
+    </a>
+
+    <ul class="nav-links" role="list">
+      <li><a href="index.html" class="active" data-i18n="nav_home">Home</a></li>
+      <li><a href="listings.html" data-i18n="nav_listings">Listings</a></li>
+      <li><a href="#how-it-works" data-i18n="nav_about">About</a></li>
+      <li><a href="#contact" data-i18n="nav_contact">Contact</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <div class="lang-toggle" role="group" aria-label="Language selector">
+        <button class="lang-btn active" data-lang="en" aria-label="Switch to English">EN</button>
+        <button class="lang-btn" data-lang="am" aria-label="ወደ አማርኛ ቀይር">አማ</button>
+      </div>
+      <button class="btn btn-outline btn-sm" data-modal="loginModal" data-i18n="nav_login">Login</button>
+      <button class="btn btn-primary btn-sm" data-modal="listingModal" data-i18n="nav_post">Post Listing</button>
+    </div>
+
+    <button class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     HERO
+══════════════════════════════════════════ -->
+<section class="hero" aria-labelledby="hero-heading">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="hero-grid" aria-hidden="true"></div>
+  <div class="hero-glow" aria-hidden="true"></div>
+
+  <div class="container">
+    <!-- Left Content -->
+    <div class="hero-content">
+      <div class="hero-eyebrow" data-i18n="hero_badge">Ethiopia's #1 Vehicle Marketplace</div>
+
+      <h1 class="hero-title" id="hero-heading">
+        <span data-i18n="hero_title_1">Find Your</span><br>
+        <em data-i18n="hero_title_2">Perfect Vehicle</em><br>
+        <span data-i18n="hero_title_3">In Ethiopia</span>
+      </h1>
+
+      <p class="hero-subtitle" data-i18n="hero_sub">
+        Cars, Motorcycles &amp; Bajajs from trusted sellers across Addis Ababa, Adama, Hawassa and beyond. AI-powered broker available 24/7.
+      </p>
+
+      <div class="hero-actions">
+        <a href="listings.html" class="btn btn-primary btn-lg" data-i18n="hero_btn_browse">Browse Vehicles</a>
+        <button class="btn btn-outline btn-lg" data-modal="listingModal" data-i18n="hero_btn_sell">List Your Vehicle</button>
+      </div>
+
+      <div class="hero-stats" role="list">
+        <div class="stat-item" role="listitem">
+          <div class="stat-number">
+            <span class="counter" data-counter="342" data-suffix="">0</span>+
+          </div>
+          <div class="stat-label" data-i18n="stat_listings">Active Listings</div>
+        </div>
+        <div class="stat-item" role="listitem">
+          <div class="stat-number">
+            <span class="counter" data-counter="87" data-suffix="">0</span>+
+          </div>
+          <div class="stat-label" data-i18n="stat_sellers">Verified Sellers</div>
+        </div>
+        <div class="stat-item" role="listitem">
+          <div class="stat-number">
+            <span class="counter" data-counter="12" data-suffix="">0</span>
+          </div>
+          <div class="stat-label" data-i18n="stat_cities">Cities Covered</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Visual -->
+    <div class="hero-visual" aria-hidden="true">
+      <div class="hero-card-stack">
+        <!-- Main card -->
+        <div class="vehicle-card-preview card-main">
+          <div class="card-img">🚗</div>
+          <div class="card-body">
+            <div class="card-badge gold">⭐ Featured</div>
+            <div class="card-title-preview">Toyota Vitz 2015</div>
+            <div class="card-price-preview">1,250,000 <span>ETB</span></div>
+          </div>
+        </div>
+        <!-- Secondary card -->
+        <div class="vehicle-card-preview card-secondary">
+          <div class="card-img">🛺</div>
+          <div class="card-body">
+            <div class="card-badge">✓ Verified</div>
+            <div class="card-title-preview">TVS King Bajaj 2023</div>
+            <div class="card-price-preview">185,000 <span>ETB</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SEARCH BAR
+══════════════════════════════════════════ -->
+<section class="search-section" aria-label="Vehicle search">
+  <div class="container">
+    <div class="search-box" role="search">
+      <div class="search-field">
+        <label for="filterType" data-i18n="search_type">Vehicle Type</label>
+        <select id="filterType">
+          <option value="" data-i18n="type_all">All Types</option>
+          <option value="car" data-i18n="type_car">Car</option>
+          <option value="motorcycle" data-i18n="type_moto">Motorcycle</option>
+          <option value="bajaj" data-i18n="type_bajaj">Bajaj</option>
+        </select>
+      </div>
+      <div class="search-field">
+        <label for="filterBrand" data-i18n="search_brand">Brand / Model</label>
+        <input type="text" id="filterBrand" placeholder="e.g. Toyota, Haojue..." />
+      </div>
+      <div class="search-field">
+        <label for="filterPrice" data-i18n="search_price">Max Price (ETB)</label>
+        <input type="number" id="filterPrice" placeholder="e.g. 500000" step="10000" />
+      </div>
+      <div class="search-field">
+        <label for="filterLocation" data-i18n="search_location">Location</label>
+        <select id="filterLocation">
+          <option value="" data-i18n="loc_all">All Locations</option>
+          <option value="addis">Addis Ababa</option>
+          <option value="adama">Adama</option>
+          <option value="hawassa">Hawassa</option>
+          <option value="bahirdar">Bahir Dar</option>
+          <option value="mekelle">Mekelle</option>
+          <option value="dire">Dire Dawa</option>
+        </select>
+      </div>
+      <div class="search-field" style="flex:0">
+        <label style="visibility:hidden">Search</label>
+        <button id="searchBtn" class="btn btn-primary" style="width:100%" data-i18n="search_btn">Search</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     LISTINGS
+══════════════════════════════════════════ -->
+<section class="listings-section" id="listings" aria-labelledby="listings-heading">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">Vehicles</div>
+      <h2 class="section-title" id="listings-heading">Browse <em class="teal">All Listings</em></h2>
+      <p class="section-subtitle">Fresh inventory updated daily from verified sellers across Ethiopia</p>
+    </div>
+
+    <div class="listings-tabs" role="tablist">
+      <button class="tab-btn active" data-filter="all" role="tab" aria-selected="true" data-i18n="type_all">All</button>
+      <button class="tab-btn" data-filter="featured" role="tab" data-i18n="featured_tab">Featured</button>
+      <button class="tab-btn" data-filter="car" role="tab" data-i18n="cars_tab">Cars</button>
+      <button class="tab-btn" data-filter="motorcycle" role="tab" data-i18n="motos_tab">Motorcycles</button>
+      <button class="tab-btn" data-filter="bajaj" role="tab" data-i18n="bajajs_tab">Bajajs</button>
+    </div>
+
+    <div class="listings-grid" id="listingsGrid">
+
+      <!-- Card 1 — Featured Car -->
+      <article class="listing-card featured" data-type="car" data-brand="toyota vitz" data-price="1250000" data-location="addis" data-id="001" data-featured="true">
+        <div class="listing-img">🚗
+          <div class="listing-condition">Locally Used</div>
+        </div>
+        <div class="listing-body">
+          <div class="listing-type">🚗 Car</div>
+          <h3 class="listing-name">Toyota Vitz 2015</h3>
+          <div class="listing-meta">
+            <span>📍 Addis Ababa</span>
+            <span>⚙️ Auto</span>
+            <span>🛣️ 58,000 km</span>
+          </div>
+          <div class="listing-footer">
+            <div class="listing-price">
+              1,250,000
+              <small>ETB</small>
+            </div>
+            <div class="listing-contact">
+              <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
+              <a href="tel:+251900000001" class="contact-btn" title="Call seller">📞</a>
+              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+            </div>
+          </div>
+          <div class="listing-seller">
+            <div class="seller-avatar">A</div>
+            Abebe Kebede &nbsp;<span class="verified-badge">✓ Verified</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 2 — Bajaj -->
+      <article class="listing-card" data-type="bajaj" data-brand="tvs king" data-price="185000" data-location="adama" data-id="002" data-featured="false">
+        <div class="listing-img">🛺
+          <div class="listing-condition">Brand New</div>
+        </div>
+        <div class="listing-body">
+          <div class="listing-type">🛺 Bajaj</div>
+          <h3 class="listing-name">TVS King Bajaj 2024</h3>
+          <div class="listing-meta">
+            <span>📍 Adama</span>
+            <span>⛽ Petrol</span>
+            <span>🛣️ 0 km</span>
+          </div>
+          <div class="listing-footer">
+            <div class="listing-price">
+              185,000
+              <small>ETB</small>
+            </div>
+            <div class="listing-contact">
+              <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
+              <a href="tel:+251900000002" class="contact-btn" title="Call seller">📞</a>
+              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+            </div>
+          </div>
+          <div class="listing-seller">
+            <div class="seller-avatar">R</div>
+            Rode Star Motors &nbsp;<span class="verified-badge">✓ Verified</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 3 — Motorcycle -->
+      <article class="listing-card" data-type="motorcycle" data-brand="haojue" data-price="95000" data-location="hawassa" data-id="003" data-featured="false">
+        <div class="listing-img">🏍️
+          <div class="listing-condition">Locally Used</div>
+        </div>
+        <div class="listing-body">
+          <div class="listing-type">🏍️ Motorcycle</div>
+          <h3 class="listing-name">Haojue HJ150-23 2022</h3>
+          <div class="listing-meta">
+            <span>📍 Hawassa</span>
+            <span>⛽ Petrol</span>
+            <span>🛣️ 22,000 km</span>
+          </div>
+          <div class="listing-footer">
+            <div class="listing-price">
+              95,000
+              <small>ETB</small>
+            </div>
+            <div class="listing-contact">
+              <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
+              <a href="tel:+251900000003" class="contact-btn" title="Call seller">📞</a>
+              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+            </div>
+          </div>
+          <div class="listing-seller">
+            <div class="seller-avatar">T</div>
+            Tigist Alemu
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 4 — Featured Car -->
+      <article class="listing-card featured" data-type="car" data-brand="suzuki dzire" data-price="980000" data-location="addis" data-id="004" data-featured="true">
+        <div class="listing-img">🚗
+          <div class="listing-condition">Locally Used</div>
+        </div>
+        <div class="listing-body">
+          <div class="listing-type">🚗 Car</div>
+          <h3 class="listing-name">Suzuki Dzire 2018</h3>
+          <div class="listing-meta">
+            <span>📍 Addis Ababa</span>
+            <span>⚙️ Auto</span>
+            <span>🛣️ 41,000 km</span>
+          </div>
+          <div class="listing-footer">
+            <div class="listing-price">
+              980,000
+              <small>ETB</small>
+            </div>
+            <div class="listing-contact">
+              <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
+              <a href="tel:+251900000004" class="contact-btn" title="Call seller">📞</a>
+              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+            </div>
+          </div>
+          <div class="listing-seller">
+            <div class="seller-avatar">M</div>
+            Mohammed Ali &nbsp;<span class="verified-badge">✓ Verified</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 5 — Motorcycle -->
+      <article class="listing-card" data-type="motorcycle" data-brand="tvs apache" data-price="135000" data-location="adama" data-id="005" data-featured="false">
+        <div class="listing-img">🏍️
+          <div class="listing-condition">Brand New</div>
+        </div>
+        <div class="listing-body">
+          <div class="listing-type">🏍️ Motorcycle</div>
+          <h3 class="listing-name">TVS Apache RTR 160 2024</h3>
+          <div class="listing-meta">
+            <span>📍 Adama</span>
+            <span>⛽ Petrol</span>
+            <span>🛣️ 0 km</span>
+          </div>
+          <div class="listing-footer">
+            <div class="listing-price">
+              135,000
+              <small>ETB</small>
+            </div>
+            <div class="listing-contact">
+              <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
+              <a href="tel:+251900000005" class="contact-btn" title="Call seller">📞</a>
+              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+            </div>
+          </div>
+          <div class="listing-seller">
+            <div class="seller-avatar">R</div>
+            Rode Star Motors &nbsp;<span class="verified-badge">✓ Verified</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- Card 6 — Bajaj -->
+      <article class="listing-card" data-type="bajaj" data-brand="bajaj re" data-price="145000" data-location="bahirdar" data-id="006" data-featured="false">
+        <div class="listing-img">🛺
+          <div class="listing-condition">Locally Used</div>
+        </div>
+        <div class="listing-body">
+          <div class="listing-type">🛺 Bajaj</div>
+          <h3 class="listing-name">Bajaj RE 4S 2021</h3>
+          <div class="listing-meta">
+            <span>📍 Bahir Dar</span>
+            <span>⛽ Petrol</span>
+            <span>🛣️ 35,000 km</span>
+          </div>
+          <div class="listing-footer">
+            <div class="listing-price">
+              145,000
+              <small>ETB</small>
+            </div>
+            <div class="listing-contact">
+              <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
+              <a href="tel:+251900000006" class="contact-btn" title="Call seller">📞</a>
+              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+            </div>
+          </div>
+          <div class="listing-seller">
+            <div class="seller-avatar">D</div>
+            Dawit Tadesse
+          </div>
+        </div>
+      </article>
+
+    </div><!-- /listings-grid -->
+
+    <div style="text-align:center;margin-top:40px">
+      <a href="listings.html" class="btn btn-outline btn-lg">View All Listings →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     HOW IT WORKS
+══════════════════════════════════════════ -->
+<section class="how-section" id="how-it-works" aria-labelledby="how-heading">
+  <div class="container">
+    <div class="section-header" style="text-align:center">
+      <div class="section-eyebrow">Process</div>
+      <h2 class="section-title" id="how-heading" data-i18n="how_title">How Bridge Broker Works</h2>
+      <p class="section-subtitle" data-i18n="how_sub">Connecting buyers and sellers safely — from listing to handshake</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h3 class="step-title" data-i18n="step1_title">List Your Vehicle</h3>
+        <p class="step-desc" data-i18n="step1_desc">Submit your vehicle details in minutes. We review and approve within 24 hours.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h3 class="step-title" data-i18n="step2_title">Get Discovered</h3>
+        <p class="step-desc" data-i18n="step2_desc">Buyers find your listing through search, filters, and our AI Delala chatbot.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h3 class="step-title" data-i18n="step3_title">Connect &amp; Negotiate</h3>
+        <p class="step-desc" data-i18n="step3_desc">Buyers contact you directly via phone or Telegram. No middleman fees on basic listings.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">4</div>
+        <h3 class="step-title" data-i18n="step4_title">Close the Deal</h3>
+        <p class="step-desc" data-i18n="step4_desc">Finalize the sale in person. We verify both parties for a safe transaction.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SELLER CTA
+══════════════════════════════════════════ -->
+<section class="seller-cta-section" aria-labelledby="cta-heading">
+  <div class="container">
+    <div class="seller-cta-box">
+      <div>
+        <div class="section-eyebrow">For Sellers</div>
+        <h2 class="section-title" id="cta-heading" data-i18n="cta_title">Ready to Sell Your Vehicle?</h2>
+        <p class="section-subtitle" data-i18n="cta_sub">Join hundreds of sellers on Bridge Broker. Free basic listing — featured upgrades available.</p>
+        <div class="cta-features">
+          <div class="cta-feature" data-i18n="cta_f1">Free basic listing — go live in 24 hours</div>
+          <div class="cta-feature" data-i18n="cta_f2">Featured listings pinned to top of search</div>
+          <div class="cta-feature" data-i18n="cta_f3">Verified Broker badge for professional sellers</div>
+          <div class="cta-feature" data-i18n="cta_f4">Direct buyer contact — no commission on sales</div>
+        </div>
+      </div>
+      <div class="cta-actions">
+        <div class="price-tag">
+          <div class="amount">200 ETB</div>
+          <div class="period" data-i18n="cta_week">per week</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:4px" data-i18n="cta_featured">Featured Listing</div>
+        </div>
+        <button class="btn btn-primary btn-lg" data-modal="listingModal" data-i18n="cta_btn">Post Your Listing Now</button>
+        <button class="btn btn-outline" data-modal="loginModal" data-i18n="nav_login">Login / Register</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════ -->
+<footer class="footer" id="contact">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-logo">
+          <div class="nav-logo-icon">🌉</div>
+          <span class="nav-logo-text">Bridge <span>Broker</span></span>
+        </a>
+        <p class="footer-desc" data-i18n="footer_desc">Ethiopia's trusted vehicle marketplace. Connecting buyers and sellers of Cars, Motorcycles, and Bajajs across the country.</p>
+        <div class="social-links">
+          <a href="https://t.me/bridgebroker" class="social-link" target="_blank" aria-label="Telegram">✈️</a>
+          <a href="https://wa.me/251900000000" class="social-link" target="_blank" aria-label="WhatsApp">💬</a>
+          <a href="https://tiktok.com/@bridgebroker" class="social-link" target="_blank" aria-label="TikTok">🎵</a>
+          <a href="https://facebook.com/bridgebroker" class="social-link" target="_blank" aria-label="Facebook">📘</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_vehicles">Vehicles</h4>
+        <ul>
+          <li><a href="listings.html?type=car">Cars</a></li>
+          <li><a href="listings.html?type=motorcycle">Motorcycles</a></li>
+          <li><a href="listings.html?type=bajaj">Bajajs</a></li>
+          <li><a href="listings.html?condition=new">Brand New</a></li>
+          <li><a href="listings.html?condition=used">Locally Used</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_sellers">For Sellers</h4>
+        <ul>
+          <li><a href="seller-dashboard.html">Seller Dashboard</a></li>
+          <li><a href="#" data-modal="listingModal">Post a Listing</a></li>
+          <li><a href="#">Featured Listings</a></li>
+          <li><a href="#">Verified Broker Badge</a></li>
+          <li><a href="#">Pricing</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 data-i18n="footer_company">Company</h4>
+        <ul>
+          <li><a href="#">About Us</a></li>
+          <li><a href="#">How It Works</a></li>
+          <li><a href="#">Contact Us</a></li>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span data-i18n="footer_bottom">© 2025 Bridge Broker Ethiopia. All rights reserved.</span>
+      <span style="color:var(--teal)">🌉 Bridging Buyers & Sellers</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════
+     AI CHATBOT WIDGET
+══════════════════════════════════════════ -->
+<div class="chatbot-trigger">
+  <div class="chatbot-window" id="chatWindow" role="dialog" aria-label="Delala AI Chat" aria-modal="true">
+    <div class="chat-header">
+      <div class="chat-avatar" aria-hidden="true">🤖</div>
+      <div class="chat-header-info">
+        <div class="chat-header-name">Delala AI</div>
+        <div class="chat-header-status">● Online — Vehicle Broker</div>
+      </div>
+      <button class="chat-close" id="chatClose" aria-label="Close chat">✕</button>
+    </div>
+    <div class="chat-messages" id="chatMessages" role="log" aria-live="polite"></div>
+    <div class="chat-quick-btns">
+      <button class="quick-btn" data-i18n="quick_car">🚗 Car</button>
+      <button class="quick-btn" data-i18n="quick_moto">🏍️ Motorcycle</button>
+      <button class="quick-btn" data-i18n="quick_bajaj">🛺 Bajaj</button>
+      <button class="quick-btn" data-i18n="quick_budget">💰 My budget</button>
+    </div>
+    <div class="chat-input-area">
+      <input type="text" class="chat-input" id="chatInput" data-i18n-placeholder="chat_placeholder" placeholder="Type your message..." aria-label="Chat message" />
+      <button class="chat-send" id="chatSend" aria-label="Send message">➤</button>
+    </div>
+  </div>
+  <button class="chat-fab" id="chatFab" aria-label="Open AI Delala chat" aria-expanded="false">
+    🤖
+    <div class="chat-pulse" aria-hidden="true"></div>
+  </button>
+  <div class="chat-fab-label">Ask Delala AI</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     LISTING MODAL
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="listingModal" role="dialog" aria-modal="true" aria-labelledby="listing-modal-title">
+  <div class="modal">
+    <button class="modal-close" aria-label="Close">✕</button>
+    <h2 class="modal-title" id="listing-modal-title" data-i18n="modal_list_title">Post a Vehicle Listing</h2>
+    <form id="listingForm" novalidate>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="lVehicleType">Vehicle Type *</label>
+          <select id="lVehicleType" required>
+            <option value="">Select type</option>
+            <option value="car">🚗 Car</option>
+            <option value="motorcycle">🏍️ Motorcycle</option>
+            <option value="bajaj">🛺 Bajaj</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="lCondition">Condition *</label>
+          <select id="lCondition" required>
+            <option value="">Select condition</option>
+            <option value="new">Brand New</option>
+            <option value="used">Locally Used</option>
+            <option value="seized">Bank Seized</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="lBrand">Brand *</label>
+          <input type="text" id="lBrand" placeholder="e.g. Toyota, TVS, Haojue" required />
+        </div>
+        <div class="form-group">
+          <label for="lModel">Model *</label>
+          <input type="text" id="lModel" placeholder="e.g. Vitz, King, Apache" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="lYear">Year *</label>
+          <input type="number" id="lYear" placeholder="e.g. 2020" min="1990" max="2025" required />
+        </div>
+        <div class="form-group">
+          <label for="lMileage">Mileage (KM)</label>
+          <input type="number" id="lMileage" placeholder="e.g. 35000" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="lTransmission">Transmission</label>
+          <select id="lTransmission">
+            <option value="">Select</option>
+            <option value="auto">Automatic</option>
+            <option value="manual">Manual</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="lFuel">Fuel Type</label>
+          <select id="lFuel">
+            <option value="">Select</option>
+            <option value="petrol">Petrol</option>
+            <option value="diesel">Diesel</option>
+            <option value="electric">Electric</option>
+            <option value="hybrid">Hybrid</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="lPrice">Price (ETB) *</label>
+          <input type="number" id="lPrice" placeholder="e.g. 500000" required />
+        </div>
+        <div class="form-group">
+          <label for="lLocation">Location *</label>
+          <select id="lLocation" required>
+            <option value="">Select city</option>
+            <option value="addis">Addis Ababa</option>
+            <option value="adama">Adama</option>
+            <option value="hawassa">Hawassa</option>
+            <option value="bahirdar">Bahir Dar</option>
+            <option value="mekelle">Mekelle</option>
+            <option value="dire">Dire Dawa</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="lPhone">Seller Phone Number *</label>
+        <input type="tel" id="lPhone" placeholder="+251 9XX XXX XXX" required />
+        <div class="form-hint">Buyers will contact you on this number</div>
+      </div>
+      <div class="form-group">
+        <label>Vehicle Photos</label>
+        <div class="upload-area" onclick="document.getElementById('lPhotos').click()">
+          <div class="upload-icon">📷</div>
+          <div class="upload-text">Click to upload photos (up to 8 images)</div>
+          <input type="file" id="lPhotos" multiple accept="image/*" style="display:none" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="lDesc">Additional Description</label>
+        <textarea id="lDesc" placeholder="Any extra details about the vehicle..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px">
+        Submit Listing for Review
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     LOGIN MODAL
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="login-modal-title">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-close" aria-label="Close">✕</button>
+    <h2 class="modal-title" id="login-modal-title" data-i18n="modal_login_title">Login to Bridge Broker</h2>
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label for="loginEmail">Email Address</label>
+        <input type="email" id="loginEmail" placeholder="you@email.com" required />
+      </div>
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" required />
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;margin-bottom:12px">
+        Login
+      </button>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
