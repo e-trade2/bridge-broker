@@ -14,7 +14,7 @@
 //  - No credit card needed!
 // ─────────────────────────────────────────────────────
 
-const GEMINI_API_KEY = "AQ.Ab8RN6IqXXvlojzHfdRnGBgP87lCto9i4OFaxo3M6RfezbtyeA"; // ← Paste your key here
+const GEMINI_API_KEY = "AIzaSyAQ.Ab8RN6IqXXvlojzHfdRnGBgP87lCto9i4OFaxo3M6RfezbtyeA"; // ← Paste your key here
 const GEMINI_MODEL   = "gemini-2.0-flash";
 const GEMINI_URL     = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
