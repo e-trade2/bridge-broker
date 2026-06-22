@@ -4,7 +4,7 @@
 //  to: <script type="module" src="js/main.js"></script>
 // ══════════════════════════════════════════════════════
 
-import { submitListing, loadListings, login, register, logout, onAuth, getVerifiedMap, getAdminStats, photoUrl, normalizeEthiopianPhone } from './supabase.js';
+import { submitListing, loadListings, login, register, logout, onAuth, getVerifiedMap, getAdminStats, photoUrl, normalizeEthiopianPhone, sendPasswordReset } from './supabase.js';
 import { askDelala, initDelalaChat } from './delala-ai.js';
 
 // ── LANGUAGE SYSTEM ──────────────────────────────────
@@ -172,8 +172,6 @@ function t(key) {
 
 function applyLanguage() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
-    // Skip the login/logout button — its text is managed by onAuth
-    if (el.getAttribute('data-modal') === 'loginModal') return;
     const val = t(el.getAttribute('data-i18n')); if (val) el.textContent = val;
   });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
@@ -627,7 +625,7 @@ function initLogin() {
 
   toggleLink.addEventListener('click', () => {
     isRegister = !isRegister;
-    if (modalTitle) modalTitle.textContent = isRegister ? 'Create Seller Account' : 'Login to Bridge Broker';
+    if (modalTitle) modalTitle.textContent = isRegister ? 'Sign Up' : 'Login to Bridge Broker';
     toggleLink.innerHTML = isRegister
       ? 'Already have an account? <span style="color:var(--teal)">Login</span>'
       : 'New seller? <span style="color:var(--teal)">Create an account</span>';
@@ -642,6 +640,37 @@ function initLogin() {
       loginForm.insertBefore(nameGroup, loginForm.firstChild);
     } else if (!isRegister && nameGroup) {
       nameGroup.remove();
+    }
+
+    // Show forgot password only on login mode
+    const forgotWrap = document.getElementById('forgotPasswordWrap');
+    if (forgotWrap) forgotWrap.style.display = isRegister ? 'none' : 'block';
+  });
+
+  // Add "Forgot password?" link (login mode only)
+  const forgotWrap = document.createElement('p');
+  forgotWrap.id = 'forgotPasswordWrap';
+  forgotWrap.style.cssText = 'text-align:right;font-size:12px;margin-top:-8px;margin-bottom:8px;';
+  forgotWrap.innerHTML = '<a href="#" id="forgotPasswordLink" style="color:var(--teal);text-decoration:none;">Forgot password?</a>';
+  // Insert before the submit button
+  const submitBtn = loginForm.querySelector('[type=submit]');
+  if (submitBtn) loginForm.insertBefore(forgotWrap, submitBtn);
+  else loginForm.appendChild(forgotWrap);
+
+  document.getElementById('forgotPasswordLink')?.addEventListener('click', async e => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail')?.value?.trim();
+    if (!email) { showToast('\u26a0\ufe0f Enter your email address first, then click Forgot password.'); return; }
+    const link = document.getElementById('forgotPasswordLink');
+    link.textContent = '\u23f3 Sending...';
+    try {
+      await sendPasswordReset(email);
+      showToast('\ud83d\udce7 Password reset email sent! Check your inbox.');
+      closeModal('loginModal');
+    } catch (err) {
+      showToast('\u274c ' + err.message);
+    } finally {
+      link.textContent = 'Forgot password?';
     }
   });
 
@@ -669,7 +698,7 @@ function initLogin() {
     } catch (err) {
       showToast(`❌ ${err.message}`);
     } finally {
-      btn.textContent = isRegister ? 'Create Account' : 'Login';
+      btn.textContent = isRegister ? 'Sign Up' : 'Login';
       btn.disabled = false;
     }
   });
@@ -800,17 +829,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       currentLang = btn.dataset.lang;
       applyLanguage();
-      // Re-sync login/logout button text after language change
-      const loginBtns = document.querySelectorAll('[data-modal="loginModal"]');
-      loginBtns.forEach(loginBtn => {
-        if (currentUser) {
-          loginBtn.textContent = t('login_logout');
-          loginBtn.onclick = async () => { await logout(); showToast('Logged out.'); };
-        } else {
-          loginBtn.textContent = t('nav_login');
-          loginBtn.onclick = () => openModal('loginModal');
-        }
-      });
     });
   });
 
@@ -891,3 +909,4 @@ function showListingPreview(data, files, onConfirm) {
     onConfirm();
   });
 }
+

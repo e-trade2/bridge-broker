@@ -7,7 +7,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 // ── YOUR SUPABASE CREDENTIALS ────────────────────────
 const SUPABASE_URL  = 'https://xrmbzycasbzdaolvtuop.supabase.co';
-const SUPABASE_KEY  = 'sb_publishable_oJsugFsQVL7OvqKxjXzDfw_Z6UBoK9t';
+const SUPABASE_KEY  = 'sb_publishable_EIjYMLjXtbdfL-J1gs-B4g_DPjL0qzh';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -374,6 +374,27 @@ export async function login(email, password) {
   });
   if (error) throw error;
   return data.user;
+}
+
+/**
+ * Send a password-reset email.
+ * Supabase emails a link; clicking it returns the user to the app
+ * with a recovery token so they can set a new password.
+ */
+export async function sendPasswordReset(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/seller-dashboard.html`,
+  });
+  if (error) throw error;
+}
+
+/**
+ * Set a new password after the user has clicked the reset link.
+ * Must be called while the recovery session is active.
+ */
+export async function updatePassword(newPassword) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw error;
 }
 
 /**
