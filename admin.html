@@ -88,6 +88,7 @@
       <a href="#" class="sidebar-link" data-section="escrow" onclick="loadEscrow(); document.getElementById('escrowList').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">🔒</span> Escrow <span class="admin-badge" id="escrowHeldCount">…</span></a>
       <a href="#" class="sidebar-link" data-section="featured" onclick="loadFeaturedListings(); document.getElementById('featuredList').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">⭐</span> Featured Listings</a>
       <a href="#" class="sidebar-link" data-section="commission" onclick="loadCommissionSettings(); document.getElementById('commissionSettingsForm').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">⚙️</span> Commission Settings</a>
+      <a href="#" class="sidebar-link" data-section="pricing" onclick="loadPricingSettings(); document.getElementById('pricingSettingsForm').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">💲</span> Featured Pricing</a>
     </div>
   </aside>
 
@@ -221,7 +222,17 @@
       </div>
       <div id="commissionSettingsForm" style="padding:0 16px 16px"></div>
     </div>
-  </main>
+
+    <!-- FEATURED PRICING SETTINGS -->
+    <div class="table-card" style="margin-top:20px">
+      <div class="table-card-header">
+        <h2 class="table-card-title">💲 Featured Listing Prices</h2>
+      </div>
+      <div style="padding:16px;font-size:12px;color:var(--gray-400);margin-bottom:4px">
+        Set the prices sellers pay to feature their listing. Changes take effect immediately — the next seller who opens the Feature panel will see the new prices. Saved to Supabase so all devices stay in sync.
+      </div>
+      <div id="pricingSettingsForm" style="padding:0 16px 16px"></div>
+    </div>
 </div>
 
 <!-- Create Escrow Modal -->
@@ -1643,6 +1654,91 @@ window.saveCommissionSettings = async function() {
   }
 }
 
+// ══════════════════════════════════════════════════════
+//  Featured Pricing Settings — stored in admin_settings
+//  Keys: bb_price_featured_1week, bb_price_featured_4weeks
+//  The seller dashboard and payment-init.js read these at
+//  runtime so changing them here takes effect immediately.
+// ══════════════════════════════════════════════════════
+const PRICING_KEYS = {
+  week1:  'bb_price_featured_1week',
+  week4:  'bb_price_featured_4weeks',
+};
+const PRICING_DEFAULTS = { week1: 200, week4: 700 };
+
+function getFeaturedPrice(key) {
+  const cached = localStorage.getItem(PRICING_KEYS[key]);
+  return cached !== null ? Number(cached) : PRICING_DEFAULTS[key];
+}
+
+async function loadPricingFromSupabase() {
+  try {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('key, value')
+      .in('key', Object.values(PRICING_KEYS));
+    if (error) throw error;
+    (data || []).forEach(row => {
+      if (row.value !== null) localStorage.setItem(row.key, row.value);
+    });
+  } catch (e) {
+    console.warn('pricing fetch failed, using cache:', e.message);
+  }
+}
+loadPricingFromSupabase();
+
+window.loadPricingSettings = function() {
+  const form = document.getElementById('pricingSettingsForm');
+  form.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:440px;margin-bottom:20px">
+      <div>
+        <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">1 Week Price (ETB)</label>
+        <div style="display:flex;align-items:center;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);border-radius:8px;overflow:hidden">
+          <input type="number" id="price1Week" min="1" step="1" value="${getFeaturedPrice('week1')}"
+            style="flex:1;background:transparent;border:none;color:var(--white);padding:10px 4px 10px 14px;font-size:16px;outline:none;width:80px" />
+          <span style="padding:10px 14px 10px 4px;color:var(--gray-400)">ETB</span>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">4 Weeks Price (ETB)</label>
+        <div style="display:flex;align-items:center;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);border-radius:8px;overflow:hidden">
+          <input type="number" id="price4Week" min="1" step="1" value="${getFeaturedPrice('week4')}"
+            style="flex:1;background:transparent;border:none;color:var(--white);padding:10px 4px 10px 14px;font-size:16px;outline:none;width:80px" />
+          <span style="padding:10px 14px 10px 4px;color:var(--gray-400)">ETB</span>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--gray-400);margin-bottom:16px">
+      💡 Tip: 4 Weeks price is usually ~3× the 1 Week price to give a small discount.
+    </div>
+    <button class="btn btn-primary" onclick="savePricingSettings()">💾 Save Prices</button>
+  `;
+};
+
+window.savePricingSettings = async function() {
+  const week1 = parseInt(document.getElementById('price1Week').value) || 0;
+  const week4 = parseInt(document.getElementById('price4Week').value) || 0;
+
+  if (week1 < 1 || week4 < 1) {
+    showToast('❌ Prices must be at least 1 ETB.'); return;
+  }
+  if (week4 <= week1) {
+    showToast('⚠️ 4-week price should be higher than 1-week price.'); return;
+  }
+
+  localStorage.setItem(PRICING_KEYS.week1, week1);
+  localStorage.setItem(PRICING_KEYS.week4, week4);
+
+  try {
+    const { error } = await supabase.from('admin_settings').upsert([
+      { key: PRICING_KEYS.week1, value: String(week1) },
+      { key: PRICING_KEYS.week4, value: String(week4) },
+    ], { onConflict: 'key' });
+    if (error) throw error;
+    showToast(`✅ Prices saved — 1 Week: ${week1} ETB · 4 Weeks: ${week4} ETB`);
+  } catch (e) {
+    showToast(`⚠️ Saved locally only — Supabase write failed: ${e.message}`);
+  }
+};
+
 </script>
-</body>
-</html>
