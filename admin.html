@@ -335,7 +335,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const SUPABASE_URL = 'https://xrmbzycasbzdaolvtuop.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_oJsugFsQVL7OvqKxjXzDfw_Z6UBoK9t';
+const SUPABASE_KEY = 'sb_publishable_EIjYMLjXtbdfL-J1gs-B4g_DPjL0qzh';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Broker's own number — change this to your real number
@@ -799,7 +799,8 @@ window.approveVerification = async function(requestId, userId) {
   if (!confirm('Approve this seller as Verified? Their badge will appear on all their listings immediately.')) return;
 
   const { data: sessionData } = await supabase.auth.getSession();
-  const adminId = sessionData.session?.user?.id;
+  const adminId    = sessionData.session?.user?.id;
+  const adminEmail = sessionData.session?.user?.email || null;
 
   const { error: reqErr } = await supabase
     .from('verification_requests')
@@ -809,7 +810,7 @@ window.approveVerification = async function(requestId, userId) {
 
   const { error: sellerErr } = await supabase
     .from('sellers')
-    .update({ verified: true, verified_at: new Date().toISOString(), verified_by: adminId })
+    .update({ verified: true, verified_at: new Date().toISOString(), verified_by: adminId, verified_by_email: adminEmail })
     .eq('user_id', userId);
   if (sellerErr) { alert('Error: ' + sellerErr.message); return; }
 
@@ -1403,7 +1404,7 @@ window.loadUsersAndSellers = async function() {
     <div style="overflow-x:auto">
       <table>
         <thead>
-          <tr><th>Name</th><th>Phone</th><th>Listings</th><th>Verified</th><th>Joined</th><th></th></tr>
+          <tr><th>Name</th><th>Phone</th><th>Listings</th><th>Verified</th><th>Verified By</th><th>Joined</th><th></th></tr>
         </thead>
         <tbody>
           ${sellers.map(s => {
@@ -1419,6 +1420,9 @@ window.loadUsersAndSellers = async function() {
               <td>${s.verified
                 ? '<span style="color:var(--teal);font-weight:600">✓ Verified</span>'
                 : '<span style="color:var(--gray-400)">Not verified</span>'}</td>
+              <td>${s.verified
+                ? `<span style="font-size:12px;color:var(--gray-400)">${escapeHtml(s.verified_by_email || '—')}</span>`
+                : '<span style="font-size:12px;color:var(--gray-400)">—</span>'}</td>
               <td>${new Date(s.created_at).toLocaleDateString()}</td>
               <td>
                 ${s.verified
@@ -1437,13 +1441,14 @@ window.toggleSellerVerified = async function(userId, makeVerified) {
   if (!confirm(makeVerified ? 'Mark this seller as Verified? Their badge will appear immediately.' : 'Revoke this seller\'s Verified badge?')) return;
 
   const { data: sessionData } = await supabase.auth.getSession();
-  const adminId = sessionData.session?.user?.id;
+  const adminId    = sessionData.session?.user?.id;
+  const adminEmail = sessionData.session?.user?.email || null;
 
   const { error } = await supabase
     .from('sellers')
     .update(makeVerified
-      ? { verified: true, verified_at: new Date().toISOString(), verified_by: adminId }
-      : { verified: false, verified_at: null, verified_by: null })
+      ? { verified: true, verified_at: new Date().toISOString(), verified_by: adminId, verified_by_email: adminEmail }
+      : { verified: false, verified_at: null, verified_by: null, verified_by_email: null })
     .eq('user_id', userId);
 
   if (error) { showToast('❌ ' + error.message); return; }

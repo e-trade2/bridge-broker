@@ -411,8 +411,90 @@ import {
   getCurrentUser, logout, getMyListings, submitListing,
   getOrCreateSellerProfile, submitVerificationRequest, getMyVerificationStatus,
   startFeaturedPayment, getPaymentStatus, normalizeEthiopianPhone,
-  getMyBankDetails, saveMyBankDetails
+  getMyBankDetails, saveMyBankDetails, updatePassword
 } from './js/supabase.js';
+
+// ════════════════════════════════════════════════════════
+//  PASSWORD RESET HANDLER
+//  When user clicks the email link, Supabase redirects here
+//  with type=recovery in the URL hash. Detect and handle it
+//  before the auth gate so the user can set their new password.
+// ════════════════════════════════════════════════════════
+(function handlePasswordReset() {
+  // Supabase puts the token in the URL hash as ?access_token=...&type=recovery
+  // Parse it as query params by replacing the leading # with ?
+  const hash = window.location.hash;
+  if (!hash) return;
+  const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
+  if (params.get('type') !== 'recovery') return;
+
+  // Show the reset modal immediately, before the auth gate runs
+  const overlay = document.createElement('div');
+  overlay.id = 'resetPasswordOverlay';
+  overlay.style.cssText = [
+    'position:fixed;inset:0;background:rgba(0,0,0,0.65);',
+    'display:flex;align-items:center;justify-content:center;z-index:9999;'
+  ].join('');
+
+  overlay.innerHTML = `
+    <div style="background:var(--surface,#1a1a2e);border-radius:12px;padding:32px;
+                width:min(400px,90vw);box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+      <h2 style="margin:0 0 6px;font-size:1.3rem;">Set New Password</h2>
+      <p style="margin:0 0 20px;font-size:0.875rem;color:#aaa;">Choose a strong password for your account.</p>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:0.8rem;margin-bottom:6px;color:#ccc;">New Password</label>
+        <input id="resetNewPassword" type="password" placeholder="Min 6 characters"
+          style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #444;
+                 background:#0d0d1a;color:#fff;font-size:0.95rem;box-sizing:border-box;" />
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-size:0.8rem;margin-bottom:6px;color:#ccc;">Confirm Password</label>
+        <input id="resetConfirmPassword" type="password" placeholder="Repeat password"
+          style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #444;
+                 background:#0d0d1a;color:#fff;font-size:0.95rem;box-sizing:border-box;" />
+      </div>
+      <div id="resetMsg" style="font-size:0.85rem;min-height:20px;margin-bottom:12px;color:#f87171;"></div>
+      <button id="resetSubmitBtn"
+        style="width:100%;padding:12px;background:var(--teal,#14b8a6);color:#fff;
+               border:none;border-radius:8px;font-size:0.95rem;font-weight:600;cursor:pointer;">
+        Update Password
+      </button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  document.getElementById('resetSubmitBtn').addEventListener('click', async () => {
+    const newPass     = document.getElementById('resetNewPassword').value;
+    const confirmPass = document.getElementById('resetConfirmPassword').value;
+    const msg         = document.getElementById('resetMsg');
+    const btn         = document.getElementById('resetSubmitBtn');
+
+    if (!newPass || newPass.length < 6) {
+      msg.textContent = '⚠️ Password must be at least 6 characters.'; return;
+    }
+    if (newPass !== confirmPass) {
+      msg.textContent = '⚠️ Passwords do not match.'; return;
+    }
+
+    btn.textContent = '⏳ Updating...';
+    btn.disabled = true;
+    msg.textContent = '';
+
+    try {
+      await updatePassword(newPass);
+      msg.style.color = '#4ade80';
+      msg.textContent = '✅ Password updated! Loading your dashboard…';
+      // Clean the recovery token from the URL
+      history.replaceState(null, '', window.location.pathname);
+      setTimeout(() => overlay.remove(), 1500);
+    } catch (err) {
+      msg.style.color = '#f87171';
+      msg.textContent = '❌ ' + (err.message || 'Could not update password.');
+      btn.textContent = 'Update Password';
+      btn.disabled = false;
+    }
+  });
+})();
 
 // ════════════════════════════════════════════════════════
 //  AUTH GATE — redirect to home if not logged in
