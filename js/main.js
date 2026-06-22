@@ -172,6 +172,8 @@ function t(key) {
 
 function applyLanguage() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
+    // Skip the login/logout button — its text is managed by onAuth
+    if (el.getAttribute('data-modal') === 'loginModal') return;
     const val = t(el.getAttribute('data-i18n')); if (val) el.textContent = val;
   });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
@@ -798,6 +800,17 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => {
       currentLang = btn.dataset.lang;
       applyLanguage();
+      // Re-sync login/logout button text after language change
+      const loginBtns = document.querySelectorAll('[data-modal="loginModal"]');
+      loginBtns.forEach(loginBtn => {
+        if (currentUser) {
+          loginBtn.textContent = t('login_logout');
+          loginBtn.onclick = async () => { await logout(); showToast('Logged out.'); };
+        } else {
+          loginBtn.textContent = t('nav_login');
+          loginBtn.onclick = () => openModal('loginModal');
+        }
+      });
     });
   });
 
@@ -878,4 +891,3 @@ function showListingPreview(data, files, onConfirm) {
     onConfirm();
   });
 }
-
