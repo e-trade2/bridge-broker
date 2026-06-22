@@ -2,11 +2,56 @@
 <html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https://xrmbzycasbzdaolvtuop.supabase.co blob:; connect-src 'self' https://xrmbzycasbzdaolvtuop.supabase.co https://bridge-proxy-9kwv.vercel.app https://api.groq.com; frame-ancestors 'none';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Bridge Broker Ethiopia — Buy and sell Cars, Motorcycles, and Bajajs. Ethiopia's trusted vehicle marketplace with AI broker assistant." />
   <title>Bridge Broker — Ethiopia's Vehicle Marketplace</title>
+  <link rel="canonical" href="https://www.bridge-broker.com/" />
+  <meta name="robots" content="index, follow" />
+
+  <!-- Open Graph / Telegram / Facebook / WhatsApp preview -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Bridge Broker" />
+  <meta property="og:title" content="Bridge Broker — Ethiopia's Vehicle Marketplace" />
+  <meta property="og:description" content="Buy and sell Cars, Motorcycles, and Bajajs across Ethiopia. Verified sellers, secure Chapa payments, and an AI broker assistant." />
+  <meta property="og:url" content="https://www.bridge-broker.com/" />
+  <meta property="og:image" content="https://www.bridge-broker.com/og-image.jpg" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:locale:alternate" content="am_ET" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Bridge Broker — Ethiopia's Vehicle Marketplace" />
+  <meta name="twitter:description" content="Buy and sell Cars, Motorcycles, and Bajajs across Ethiopia. Verified sellers, secure Chapa payments, and an AI broker assistant." />
+  <meta name="twitter:image" content="https://www.bridge-broker.com/og-image.jpg" />
+
   <link rel="stylesheet" href="css/style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2300C9A7'/><text y='24' x='5' font-size='22'>🌉</text></svg>" />
+
+  <!-- Structured data: helps Google understand this is a marketplace/organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Bridge Broker",
+    "url": "https://www.bridge-broker.com/",
+    "description": "Ethiopia's vehicle marketplace for buying and selling cars, motorcycles, and Bajajs.",
+    "areaServed": "ET"
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Bridge Broker",
+    "url": "https://www.bridge-broker.com/",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.bridge-broker.com/listings.html?brand={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
 </head>
 <body>
 
@@ -23,8 +68,8 @@
     <ul class="nav-links" role="list">
       <li><a href="index.html" class="active" data-i18n="nav_home">Home</a></li>
       <li><a href="listings.html" data-i18n="nav_listings">Listings</a></li>
-      <li><a href="#how-it-works" data-i18n="nav_about">About</a></li>
-      <li><a href="#contact" data-i18n="nav_contact">Contact</a></li>
+      <li><a href="about.html" data-i18n="nav_about">About</a></li>
+      <li><a href="contact.html" data-i18n="nav_contact">Contact</a></li>
     </ul>
 
     <div class="nav-actions">
@@ -73,13 +118,13 @@
       <div class="hero-stats" role="list">
         <div class="stat-item" role="listitem">
           <div class="stat-number">
-            <span class="counter" data-counter="342" data-suffix="">0</span>+
+            <span class="counter" data-counter="342" data-counter-key="listings" data-suffix="">0</span>+
           </div>
           <div class="stat-label" data-i18n="stat_listings">Active Listings</div>
         </div>
         <div class="stat-item" role="listitem">
           <div class="stat-number">
-            <span class="counter" data-counter="87" data-suffix="">0</span>+
+            <span class="counter" data-counter="87" data-counter-key="sellers" data-suffix="">0</span>+
           </div>
           <div class="stat-label" data-i18n="stat_sellers">Verified Sellers</div>
         </div>
@@ -203,12 +248,12 @@
             <div class="listing-contact">
               <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
               <a href="tel:+251900000001" class="contact-btn" title="Call seller">📞</a>
-              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+              <a href="https://t.me/bridgebroker" target="_blank" rel="noopener" class="contact-btn tg" title="Telegram">✈️</a>
             </div>
           </div>
           <div class="listing-seller">
             <div class="seller-avatar">A</div>
-            Abebe Kebede &nbsp;<span class="verified-badge">✓ Verified</span>
+            Abebe Kebede
           </div>
         </div>
       </article>
@@ -234,12 +279,12 @@
             <div class="listing-contact">
               <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
               <a href="tel:+251900000002" class="contact-btn" title="Call seller">📞</a>
-              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+              <a href="https://t.me/bridgebroker" target="_blank" rel="noopener" class="contact-btn tg" title="Telegram">✈️</a>
             </div>
           </div>
           <div class="listing-seller">
             <div class="seller-avatar">R</div>
-            Rode Star Motors &nbsp;<span class="verified-badge">✓ Verified</span>
+            Rode Star Motors
           </div>
         </div>
       </article>
@@ -265,7 +310,7 @@
             <div class="listing-contact">
               <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
               <a href="tel:+251900000003" class="contact-btn" title="Call seller">📞</a>
-              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+              <a href="https://t.me/bridgebroker" target="_blank" rel="noopener" class="contact-btn tg" title="Telegram">✈️</a>
             </div>
           </div>
           <div class="listing-seller">
@@ -296,12 +341,12 @@
             <div class="listing-contact">
               <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
               <a href="tel:+251900000004" class="contact-btn" title="Call seller">📞</a>
-              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+              <a href="https://t.me/bridgebroker" target="_blank" rel="noopener" class="contact-btn tg" title="Telegram">✈️</a>
             </div>
           </div>
           <div class="listing-seller">
             <div class="seller-avatar">M</div>
-            Mohammed Ali &nbsp;<span class="verified-badge">✓ Verified</span>
+            Mohammed Ali
           </div>
         </div>
       </article>
@@ -327,12 +372,12 @@
             <div class="listing-contact">
               <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
               <a href="tel:+251900000005" class="contact-btn" title="Call seller">📞</a>
-              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+              <a href="https://t.me/bridgebroker" target="_blank" rel="noopener" class="contact-btn tg" title="Telegram">✈️</a>
             </div>
           </div>
           <div class="listing-seller">
             <div class="seller-avatar">R</div>
-            Rode Star Motors &nbsp;<span class="verified-badge">✓ Verified</span>
+            Rode Star Motors
           </div>
         </div>
       </article>
@@ -358,7 +403,7 @@
             <div class="listing-contact">
               <button class="contact-btn wishlist-btn" title="Save to favorites">🤍</button>
               <a href="tel:+251900000006" class="contact-btn" title="Call seller">📞</a>
-              <a href="https://t.me/bridgebroker" target="_blank" class="contact-btn tg" title="Telegram">✈️</a>
+              <a href="https://t.me/bridgebroker" target="_blank" rel="noopener" class="contact-btn tg" title="Telegram">✈️</a>
             </div>
           </div>
           <div class="listing-seller">
@@ -400,7 +445,7 @@
       <div class="step-card">
         <div class="step-number">3</div>
         <h3 class="step-title" data-i18n="step3_title">Connect &amp; Negotiate</h3>
-        <p class="step-desc" data-i18n="step3_desc">Buyers contact you directly via phone or Telegram. No middleman fees on basic listings.</p>
+        <p class="step-desc"><span data-i18n="step3_desc">Buyers contact you directly via phone or Telegram. You'll know our commission rate before your listing ever goes live — see</span> <a href="pricing.html" style="color:var(--teal)" data-i18n="step3_desc_link">Pricing</a>.</p>
       </div>
       <div class="step-card">
         <div class="step-number">4</div>
@@ -454,10 +499,10 @@
         </a>
         <p class="footer-desc" data-i18n="footer_desc">Ethiopia's trusted vehicle marketplace. Connecting buyers and sellers of Cars, Motorcycles, and Bajajs across the country.</p>
         <div class="social-links">
-          <a href="https://t.me/bridgebroker" class="social-link" target="_blank" aria-label="Telegram">✈️</a>
-          <a href="https://wa.me/251900000000" class="social-link" target="_blank" aria-label="WhatsApp">💬</a>
-          <a href="https://tiktok.com/@bridgebroker" class="social-link" target="_blank" aria-label="TikTok">🎵</a>
-          <a href="https://facebook.com/bridgebroker" class="social-link" target="_blank" aria-label="Facebook">📘</a>
+          <a href="https://t.me/bridgebroker" class="social-link" target="_blank" rel="noopener" aria-label="Telegram">✈️</a>
+          <a href="https://wa.me/251900000000" class="social-link" target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>
+          <a href="https://tiktok.com/@bridgebroker" class="social-link" target="_blank" rel="noopener" aria-label="TikTok">🎵</a>
+          <a href="https://facebook.com/bridgebroker" class="social-link" target="_blank" rel="noopener" aria-label="Facebook">📘</a>
         </div>
       </div>
       <div class="footer-col">
@@ -475,19 +520,19 @@
         <ul>
           <li><a href="seller-dashboard.html">Seller Dashboard</a></li>
           <li><a href="#" data-modal="listingModal">Post a Listing</a></li>
-          <li><a href="#">Featured Listings</a></li>
-          <li><a href="#">Verified Broker Badge</a></li>
-          <li><a href="#">Pricing</a></li>
+          <li><a href="featured-listings.html">Featured Listings</a></li>
+          <li><a href="verified-broker-badge.html">Verified Broker Badge</a></li>
+          <li><a href="pricing.html">Pricing</a></li>
         </ul>
       </div>
       <div class="footer-col">
         <h4 data-i18n="footer_company">Company</h4>
         <ul>
-          <li><a href="#">About Us</a></li>
-          <li><a href="#">How It Works</a></li>
-          <li><a href="#">Contact Us</a></li>
-          <li><a href="#">Privacy Policy</a></li>
-          <li><a href="#">Terms of Service</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="how-it-works.html">How It Works</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
+          <li><a href="privacy-policy.html">Privacy Policy</a></li>
+          <li><a href="terms-of-service.html">Terms of Service</a></li>
         </ul>
       </div>
     </div>
@@ -509,6 +554,7 @@
         <div class="chat-header-name">Delala AI</div>
         <div class="chat-header-status">● Online — Vehicle Broker</div>
       </div>
+      <button class="chat-clear" id="chatClear" aria-label="Clear chat" title="Clear chat">🗑</button>
       <button class="chat-close" id="chatClose" aria-label="Close chat">✕</button>
     </div>
     <div class="chat-messages" id="chatMessages" role="log" aria-live="polite"></div>
@@ -624,10 +670,14 @@
       </div>
       <div class="form-group">
         <label>Vehicle Photos</label>
-        <div class="upload-area" onclick="document.getElementById('lPhotos').click()">
+        <!-- lPhotos lives OUTSIDE .upload-area on purpose: renderPhotoPreviews()
+             in main.js replaces .upload-area's innerHTML once photos are picked
+             (to show thumbnails), which would silently delete this <input> and
+             break every click afterward if it were nested inside. -->
+        <input type="file" id="lPhotos" multiple accept="image/*" style="display:none" />
+        <div class="upload-area" id="uploadArea">
           <div class="upload-icon">📷</div>
           <div class="upload-text">Click to upload photos (up to 8 images)</div>
-          <input type="file" id="lPhotos" multiple accept="image/*" style="display:none" />
         </div>
       </div>
       <div class="form-group">

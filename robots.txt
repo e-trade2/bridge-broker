@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /seller-dashboard.html
+Disallow: /api/
+
+Sitemap: https://www.bridge-broker.com/sitemap.xml

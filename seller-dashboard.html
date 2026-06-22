@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https://xrmbzycasbzdaolvtuop.supabase.co blob:; connect-src 'self' https://xrmbzycasbzdaolvtuop.supabase.co https://bridge-proxy-9kwv.vercel.app https://api.groq.com; frame-ancestors 'none';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Seller Dashboard — Bridge Broker</title>
+  <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -19,7 +21,7 @@
         <button class="lang-btn active" data-lang="en">EN</button>
         <button class="lang-btn" data-lang="am">አማ</button>
       </div>
-      <span style="font-size:14px;color:var(--gray-400)">👤 Seller Portal</span>
+      <span id="navUserName" style="font-size:14px;color:var(--gray-400)">👤 Seller Portal</span>
       <a href="index.html" class="btn btn-outline btn-sm">← Back to Site</a>
     </div>
   </div>
@@ -31,7 +33,7 @@
   <aside class="sidebar">
     <div class="sidebar-section">
       <div class="sidebar-label">Main</div>
-      <a href="#" class="sidebar-link active">
+      <a href="#" class="sidebar-link active" onclick="showSection('overview')">
         <span class="icon">📊</span> Dashboard
       </a>
       <a href="#" class="sidebar-link" onclick="showSection('my-listings')">
@@ -40,25 +42,22 @@
       <a href="#" class="sidebar-link" onclick="showSection('new-listing')">
         <span class="icon">➕</span> Post New Listing
       </a>
-      <a href="#" class="sidebar-link">
-        <span class="icon">❤️</span> Saved Listings
-      </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Upgrade</div>
       <a href="#" class="sidebar-link" onclick="showSection('featured')">
         <span class="icon">⭐</span> Featured Listings
       </a>
-      <a href="#" class="sidebar-link">
+      <a href="#" class="sidebar-link" onclick="showSection('verify')">
         <span class="icon">✅</span> Get Verified Badge
       </a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Account</div>
-      <a href="#" class="sidebar-link">
-        <span class="icon">⚙️</span> Settings
+      <a href="#" class="sidebar-link" onclick="showSection('bank-details')">
+        <span class="icon">🏦</span> Bank Details
       </a>
-      <a href="index.html" class="sidebar-link">
+      <a href="#" class="sidebar-link" id="logoutLink">
         <span class="icon">🚪</span> Logout
       </a>
     </div>
@@ -67,48 +66,91 @@
   <!-- MAIN CONTENT -->
   <main class="dashboard-main" id="dashboardMain">
 
+    <!-- AUTH GATE — shown while checking, replaced once confirmed -->
+    <div id="section-authgate" style="display:flex;align-items:center;justify-content:center;height:60vh;flex-direction:column;gap:16px">
+      <div style="font-size:32px">🔒</div>
+      <p style="color:var(--gray-400)">Checking your session…</p>
+    </div>
+
     <!-- OVERVIEW SECTION -->
-    <div id="section-overview">
+    <div id="section-overview" style="display:none">
       <div class="dash-header">
-        <h1 class="dash-title">Welcome back, Sinx 👋</h1>
-        <p class="dash-subtitle">Here's how your listings are performing today</p>
+        <h1 class="dash-title" id="overviewGreeting">Welcome back 👋</h1>
+        <p class="dash-subtitle">Here's how your listings are performing</p>
       </div>
 
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-card-label">Active Listings</div>
-          <div class="stat-card-value">4</div>
-          <div class="stat-card-change">↑ 1 this week</div>
+          <div class="stat-card-value" id="statActive">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Pending Review</div>
+          <div class="stat-card-value" id="statPending">—</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">Total Views</div>
-          <div class="stat-card-value">218</div>
-          <div class="stat-card-change">↑ 34 today</div>
+          <div class="stat-card-value" id="statViews">—</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-label">Inquiries</div>
-          <div class="stat-card-value">12</div>
-          <div class="stat-card-change">↑ 3 today</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Vehicles Sold</div>
-          <div class="stat-card-value">2</div>
-          <div class="stat-card-change" style="color:var(--gold)">★ Verified Seller</div>
+          <div class="stat-card-label">Verified Seller</div>
+          <div class="stat-card-value" id="statVerified">—</div>
         </div>
       </div>
 
-      <!-- My Listings Table -->
-      <div class="table-card">
+      <!-- Mini listings preview -->
+      <div class="table-card" style="margin-top:20px">
         <div class="table-card-header">
           <h2 class="table-card-title">My Listings</h2>
-          <button class="btn btn-primary btn-sm" onclick="showNewListingForm()">+ Post New Listing</button>
+          <button class="btn btn-primary btn-sm" onclick="showSection('new-listing')">+ Post New</button>
         </div>
+        <div id="overviewListingsBody" style="padding:0 16px 16px">
+          <p style="color:var(--gray-400);padding:20px 0">Loading…</p>
+        </div>
+      </div>
+
+      <!-- Bottom cards -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2 class="table-card-title">⭐ Featured Listings</h2>
+          </div>
+          <div style="padding:20px;text-align:center">
+            <div style="font-size:13px;color:var(--gray-400);margin-bottom:16px">Get 5x more views. Pin a listing to the top for 200 ETB/week.</div>
+            <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="showSection('featured')">
+              Upgrade a Listing ⭐
+            </button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-card-header">
+            <h2 class="table-card-title">🔒 Escrow Protection</h2>
+          </div>
+          <div style="padding:20px">
+            <div style="font-size:13px;color:var(--gray-400);margin-bottom:12px">
+              If a buyer requests escrow, the broker will send them a secure Chapa payment link. Funds are held until vehicle handoff is confirmed.
+            </div>
+            <div style="font-size:12px;background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.25);border-radius:8px;padding:12px;color:var(--gold)">
+              ⚠️ <strong>How you get paid:</strong> After handoff is confirmed, the broker manually transfers funds to your Telebirr or bank account. Contact the broker to confirm your preferred account.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /section-overview -->
+
+    <!-- MY LISTINGS SECTION -->
+    <div id="section-my-listings" style="display:none">
+      <div class="dash-header">
+        <h1 class="dash-title">My Listings 🚗</h1>
+        <button class="btn btn-primary btn-sm" onclick="showSection('new-listing')">+ Post New Listing</button>
+      </div>
+      <div class="table-card">
         <div style="overflow-x:auto">
           <table>
             <thead>
               <tr>
                 <th>Vehicle</th>
-                <th>Type</th>
                 <th>Price (ETB)</th>
                 <th>Location</th>
                 <th>Views</th>
@@ -116,110 +158,27 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td><strong>TVS King Bajaj 2024</strong></td>
-                <td>🛺 Bajaj</td>
-                <td>185,000</td>
-                <td>Adama</td>
-                <td>87</td>
-                <td><span class="status-badge status-active">Active</span></td>
-                <td>
-                  <button class="btn btn-sm btn-outline" onclick="showToast('Edit feature coming soon!')">Edit</button>
-                  <button class="btn btn-sm btn-gold" onclick="showToast('Upgrade to Featured!')">⭐ Feature</button>
-                </td>
-              </tr>
-              <tr>
-                <td><strong>TVS Apache RTR 160 2024</strong></td>
-                <td>🏍️ Motorcycle</td>
-                <td>135,000</td>
-                <td>Adama</td>
-                <td>62</td>
-                <td><span class="status-badge status-active">Active</span></td>
-                <td>
-                  <button class="btn btn-sm btn-outline" onclick="showToast('Edit feature coming soon!')">Edit</button>
-                  <button class="btn btn-sm btn-gold" onclick="showToast('Upgrade to Featured!')">⭐ Feature</button>
-                </td>
-              </tr>
-              <tr>
-                <td><strong>Haojue HJ125 2023</strong></td>
-                <td>🏍️ Motorcycle</td>
-                <td>88,000</td>
-                <td>Adama</td>
-                <td>45</td>
-                <td><span class="status-badge status-pending">Pending</span></td>
-                <td>
-                  <button class="btn btn-sm btn-outline" disabled style="opacity:0.5">Awaiting Review</button>
-                </td>
-              </tr>
-              <tr>
-                <td><strong>TVS King Bajaj 2022</strong></td>
-                <td>🛺 Bajaj</td>
-                <td>155,000</td>
-                <td>Hawassa</td>
-                <td>24</td>
-                <td><span class="status-badge status-sold">Sold</span></td>
-                <td>
-                  <button class="btn btn-sm btn-outline" onclick="showToast('Relist feature coming soon!')">Relist</button>
-                </td>
-              </tr>
+            <tbody id="myListingsBody">
+              <tr><td colspan="6" style="color:var(--gray-400);text-align:center;padding:24px">Loading…</td></tr>
             </tbody>
           </table>
         </div>
       </div>
+    </div>
 
-      <!-- Quick Stats -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
-        <div class="table-card">
-          <div class="table-card-header">
-            <h2 class="table-card-title">Recent Inquiries</h2>
-          </div>
-          <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--charcoal-light);border-radius:8px">
-              <div>
-                <div style="font-size:14px;font-weight:600">Buyer asked about TVS King</div>
-                <div style="font-size:12px;color:var(--gray-400)">via Telegram · 2h ago</div>
-              </div>
-              <a href="https://t.me" class="btn btn-sm btn-primary" target="_blank">Reply</a>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--charcoal-light);border-radius:8px">
-              <div>
-                <div style="font-size:14px;font-weight:600">Call from +251 91X XXX XXX</div>
-                <div style="font-size:12px;color:var(--gray-400)">Apache RTR · 5h ago</div>
-              </div>
-              <a href="tel:+251910000000" class="btn btn-sm btn-outline">Call Back</a>
-            </div>
-          </div>
-        </div>
-
-        <div class="table-card">
-          <div class="table-card-header">
-            <h2 class="table-card-title">Upgrade to Featured</h2>
-          </div>
-          <div style="padding:20px;text-align:center">
-            <div style="font-size:40px;margin-bottom:12px">⭐</div>
-            <div style="font-size:16px;font-weight:600;margin-bottom:8px">Pin Your Listing to the Top</div>
-            <div style="font-size:13px;color:var(--gray-400);margin-bottom:16px">Get 5x more views with a Featured listing. Only 200 ETB per week.</div>
-            <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="showToast('Chapa payment integration — coming soon!')">
-              Pay 200 ETB via Chapa
-            </button>
-          </div>
-        </div>
-      </div>
-    </div><!-- /section-overview -->
-
-    <!-- NEW LISTING INLINE FORM -->
+    <!-- NEW LISTING FORM -->
     <div id="section-new-listing" style="display:none">
       <div class="dash-header">
         <h1 class="dash-title">Post a New Listing</h1>
         <p class="dash-subtitle">Fill in the vehicle details. We'll review and publish within 24 hours.</p>
       </div>
       <div class="table-card" style="padding:28px">
+        <div id="newListingStatus" style="display:none;margin-bottom:16px"></div>
         <form id="dashListingForm" novalidate>
           <div class="form-row">
             <div class="form-group">
               <label>Vehicle Type *</label>
-              <select required>
+              <select id="dlType" required>
                 <option value="">Select type</option>
                 <option value="car">🚗 Car</option>
                 <option value="motorcycle">🏍️ Motorcycle</option>
@@ -228,7 +187,7 @@
             </div>
             <div class="form-group">
               <label>Condition *</label>
-              <select required>
+              <select id="dlCondition" required>
                 <option value="">Select</option>
                 <option value="new">Brand New</option>
                 <option value="used">Locally Used</option>
@@ -239,60 +198,189 @@
           <div class="form-row">
             <div class="form-group">
               <label>Brand *</label>
-              <input type="text" placeholder="e.g. Toyota, TVS, Haojue" required />
+              <input type="text" id="dlBrand" placeholder="e.g. Toyota, TVS, Haojue" required />
             </div>
             <div class="form-group">
               <label>Model *</label>
-              <input type="text" placeholder="e.g. Vitz, King, Apache" required />
+              <input type="text" id="dlModel" placeholder="e.g. Vitz, King, Apache" required />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Year *</label>
-              <input type="number" placeholder="2024" min="1990" max="2025" required />
+              <input type="number" id="dlYear" placeholder="2024" min="1990" max="2030" required />
             </div>
             <div class="form-group">
               <label>Mileage (KM)</label>
-              <input type="number" placeholder="35000" />
+              <input type="number" id="dlMileage" placeholder="35000" />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label>Price (ETB) *</label>
-              <input type="number" placeholder="500000" required />
+              <input type="number" id="dlPrice" placeholder="500000" required />
             </div>
             <div class="form-group">
               <label>Location *</label>
-              <select required>
+              <select id="dlLocation" required>
                 <option value="">Select city</option>
-                <option value="addis">Addis Ababa</option>
-                <option value="adama">Adama</option>
-                <option value="hawassa">Hawassa</option>
-                <option value="bahirdar">Bahir Dar</option>
-                <option value="mekelle">Mekelle</option>
-                <option value="dire">Dire Dawa</option>
+                <option value="Addis Ababa">Addis Ababa</option>
+                <option value="Adama">Adama</option>
+                <option value="Hawassa">Hawassa</option>
+                <option value="Bahir Dar">Bahir Dar</option>
+                <option value="Mekelle">Mekelle</option>
+                <option value="Dire Dawa">Dire Dawa</option>
               </select>
             </div>
           </div>
           <div class="form-group">
             <label>Seller Phone *</label>
-            <input type="tel" placeholder="+251 9XX XXX XXX" required />
+            <input type="tel" id="dlPhone" placeholder="0912 345 678" required />
+            <div class="form-hint">Buyers won't see this directly — the broker number is shown after approval.</div>
           </div>
           <div class="form-group">
-            <label>Photos</label>
-            <div class="upload-area">
+            <label>Photos (up to 8)</label>
+            <!-- dlPhotos lives OUTSIDE dlUploadArea on purpose: the photo-preview
+                 script below replaces dlUploadArea's innerHTML once files are
+                 picked, which would otherwise delete this <input> from the DOM
+                 and silently break every click/upload after the first one. -->
+            <input type="file" id="dlPhotos" accept="image/*" multiple style="display:none" />
+            <div class="upload-area" id="dlUploadArea">
               <div class="upload-icon">📷</div>
-              <div class="upload-text">Click to upload photos (up to 8)</div>
+              <div class="upload-text">Click to upload photos</div>
             </div>
           </div>
           <div class="form-group">
             <label>Description</label>
-            <textarea placeholder="Any extra details..."></textarea>
+            <textarea id="dlDesc" placeholder="Any extra details — service history, modifications, reason for sale…"></textarea>
           </div>
           <div style="display:flex;gap:12px">
-            <button type="submit" class="btn btn-primary btn-lg" onclick="submitDashForm(event)">Submit for Review</button>
+            <button type="submit" id="dlSubmitBtn" class="btn btn-primary btn-lg">Submit for Review</button>
             <button type="button" class="btn btn-outline btn-lg" onclick="showSection('overview')">Cancel</button>
           </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- FEATURED LISTINGS / PAYMENT SECTION -->
+    <div id="section-featured" style="display:none">
+      <div class="dash-header">
+        <h1 class="dash-title">Featured Listings ⭐</h1>
+        <p class="dash-subtitle">Pin a listing to the top of search results. Pay securely via Chapa — supports Telebirr (up to ~10,000 ETB), CBE Birr, the major Ethiopian banks, and international Visa/Mastercard/PayPal.</p>
+      </div>
+
+      <div class="table-card" style="padding:24px;max-width:640px">
+        <div class="form-group">
+          <label for="featListingSelect">Choose a listing to feature</label>
+          <select id="featListingSelect">
+            <option value="">Loading your listings…</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Choose a plan</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <label style="border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:14px;cursor:pointer;display:block">
+              <input type="radio" name="featPlan" value="featured_1week" checked style="margin-right:8px" />
+              <strong>1 Week</strong>
+              <div style="font-size:13px;color:var(--gray-400);margin-top:4px">200 ETB</div>
+            </label>
+            <label style="border:1px solid rgba(0,201,167,0.4);border-radius:10px;padding:14px;cursor:pointer;display:block">
+              <input type="radio" name="featPlan" value="featured_4weeks" style="margin-right:8px" />
+              <strong>4 Weeks</strong>
+              <div style="font-size:13px;color:var(--teal);margin-top:4px">700 ETB <span style="color:var(--gray-400)">(save 100 ETB)</span></div>
+            </label>
+          </div>
+        </div>
+
+        <div id="featPaymentStatus" style="display:none;margin-bottom:16px"></div>
+
+        <button id="featPayBtn" class="btn btn-gold" style="width:100%;justify-content:center;padding:14px">
+          Pay via Chapa
+        </button>
+        <div class="form-hint" style="margin-top:10px;text-align:center">
+          You'll be redirected to Chapa's secure checkout. Choose Telebirr, your bank, or a card.<br>
+          <span style="color:var(--gray-400);font-size:12px">⚠️ Telebirr has a per-transaction limit of ~10,000 ETB. For larger amounts, use bank transfer or card.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET VERIFIED SECTION -->
+    <div id="section-verify" style="display:none">
+      <div class="dash-header">
+        <h1 class="dash-title">Get Verified ✅</h1>
+        <p class="dash-subtitle">Submit your ID or business license for review. An admin checks it manually — your "✓ Verified" badge actually means something to buyers.</p>
+      </div>
+
+      <div class="table-card" style="padding:28px;max-width:560px">
+        <div id="verifyStatusBox" style="margin-bottom:20px"></div>
+
+        <form id="verifyForm" novalidate>
+          <div class="form-group">
+            <label for="vFullName">Full Legal Name *</label>
+            <input type="text" id="vFullName" placeholder="As shown on your ID" required />
+          </div>
+          <div class="form-group">
+            <label for="vPhone">Phone Number *</label>
+            <input type="tel" id="vPhone" placeholder="0912 345 678" required />
+          </div>
+          <div class="form-group">
+            <label for="vDoc">ID Card or Business License Photo *</label>
+            <div class="upload-area" onclick="document.getElementById('vDoc').click()">
+              <div class="upload-icon">🪪</div>
+              <div class="upload-text" id="vDocLabel">Click to upload a clear photo</div>
+              <input type="file" id="vDoc" accept="image/*" style="display:none" required />
+            </div>
+            <div class="form-hint">Kept private — only you and Bridge Broker admins can view it.</div>
+          </div>
+          <div class="form-group">
+            <label for="vNote">Note to Admin (optional)</label>
+            <textarea id="vNote" placeholder="Anything that helps us verify you faster…"></textarea>
+          </div>
+          <button type="submit" id="verifySubmitBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px">
+            Submit for Verification
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- BANK DETAILS SECTION -->
+    <div id="section-bank-details" style="display:none">
+      <div class="dash-header">
+        <h1 class="dash-title">Bank Details 🏦</h1>
+        <p class="dash-subtitle">When an escrow sale completes, Bridge Broker sends your payout directly to this account. Fill it in now so you don't hold up your payment later.</p>
+      </div>
+
+      <div class="table-card" style="padding:28px;max-width:560px">
+        <div id="bankStatusBox" style="margin-bottom:20px"></div>
+
+        <div style="background:rgba(0,201,167,0.07);border:1px solid rgba(0,201,167,0.2);border-radius:8px;padding:14px 16px;margin-bottom:24px;font-size:13px;color:var(--gray-400);line-height:1.6">
+          💡 Your account details are stored securely and only used to transfer your escrow payout after a successful sale. Make sure the name matches your bank account exactly.
+        </div>
+
+        <form id="bankForm" novalidate>
+          <div class="form-group">
+            <label for="bankName">Account Holder Name *</label>
+            <input type="text" id="bankName" placeholder="Exactly as it appears on your bank account" required />
+            <div class="form-hint">E.g. "Sintayehu Tefera" — must match your bank's records</div>
+          </div>
+
+          <div class="form-group">
+            <label for="bankNumber">Account Number *</label>
+            <input type="text" id="bankNumber" placeholder="e.g. 1000123456789" required inputmode="numeric" />
+          </div>
+
+          <div class="form-group">
+            <label for="bankSelect">Bank *</label>
+            <select id="bankSelect" required style="width:100%;background:var(--charcoal-light);color:var(--white);border:1.5px solid rgba(255,255,255,0.12);border-radius:var(--radius-sm);padding:12px 14px;font-size:15px;appearance:none">
+              <option value="">Loading banks…</option>
+            </select>
+            <div class="form-hint">Choose your bank from the list. Includes Telebirr, CBE, Awash, Abyssinia, and all Chapa-supported banks.</div>
+          </div>
+
+          <button type="submit" id="bankSaveBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px">
+            Save Bank Details
+          </button>
         </form>
       </div>
     </div>
@@ -300,19 +388,594 @@
   </main>
 </div>
 
-<script type="module" src="js/main.js"></script>
 <script>
-function showSection(name) {
-  document.getElementById('section-overview').style.display = name === 'overview' ? '' : 'none';
-  document.getElementById('section-new-listing').style.display = name === 'new-listing' ? '' : 'none';
+// ── Simple section router (non-module, runs first) ──
+function showSection(name, arg) {
+  ['authgate','overview','my-listings','new-listing','featured','verify'].forEach(s => {
+    const el = document.getElementById('section-' + s);
+    if (el) el.style.display = (s === name) ? '' : 'none';
+  });
+  if (arg !== undefined) window._bbSectionArg = arg;
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
-}
-function showNewListingForm() { showSection('new-listing'); }
-function submitDashForm(e) {
-  e.preventDefault();
-  showToast('✅ Listing submitted! We will review and publish within 24 hours.');
-  setTimeout(() => showSection('overview'), 1500);
+  const map = { overview:'overview', 'my-listings':'my-listings', 'new-listing':'new-listing', featured:'featured', verify:'verify' };
+  if (map[name]) {
+    document.querySelectorAll('.sidebar-link').forEach(l => {
+      if (l.getAttribute('onclick')?.includes(`'${name}'`)) l.classList.add('active');
+    });
+  }
 }
 </script>
+
+<script type="module">
+import {
+  getCurrentUser, logout, getMyListings, submitListing,
+  getOrCreateSellerProfile, submitVerificationRequest, getMyVerificationStatus,
+  startFeaturedPayment, getPaymentStatus, normalizeEthiopianPhone,
+  getMyBankDetails, saveMyBankDetails
+} from './js/supabase.js';
+
+// ════════════════════════════════════════════════════════
+//  AUTH GATE — redirect to home if not logged in
+// ════════════════════════════════════════════════════════
+const user = await getCurrentUser();
+if (!user) {
+  window.location.href = 'index.html?login=required';
+  // window.location.href queues navigation but doesn't stop this script
+  // from continuing to run synchronously — without this return, the
+  // very next line would throw on user.user_metadata before the
+  // redirect actually takes effect. Top-level `return` is valid here
+  // because this is a `type="module"` script.
+  throw new Error('Not logged in — redirecting.');
+}
+
+// Populate nav name
+const displayName = user.user_metadata?.full_name || user.email || 'Seller';
+document.getElementById('navUserName').textContent = '👤 ' + displayName;
+document.getElementById('overviewGreeting').textContent = `Welcome back, ${displayName.split(' ')[0]} 👋`;
+
+// Logout
+document.getElementById('logoutLink').addEventListener('click', async (e) => {
+  e.preventDefault();
+  await logout();
+  window.location.href = 'index.html';
+});
+
+// ════════════════════════════════════════════════════════
+//  LISTINGS — shared data, loaded once and reused
+// ════════════════════════════════════════════════════════
+let myListings = [];
+
+const TYPE_EMOJI = { car: '🚗', motorcycle: '🏍️', bajaj: '🛺' };
+
+// ── XSS PROTECTION ───────────────────────────────────
+// A seller's own brand/model/description are free text they typed
+// themselves, then rendered back into innerHTML here. RLS means a
+// seller can only ever see their own rows, so this is "only" a
+// self-XSS risk today — but it's free to close and matches the
+// escaping already used in js/main.js and admin.html.
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+const STATUS_HTML = {
+  approved: '<span class="status-badge status-active">Active</span>',
+  pending:  '<span class="status-badge status-pending">Pending</span>',
+  rejected: '<span class="status-badge" style="background:rgba(255,77,77,0.15);color:#ff8a8a">Rejected</span>',
+  sold:     '<span class="status-badge status-sold">Sold</span>',
+};
+
+async function loadMyListings() {
+  myListings = await getMyListings();
+}
+
+// ── Overview mini-table (first 4 listings) ──
+function renderOverviewListings() {
+  const el = document.getElementById('overviewListingsBody');
+  if (!myListings.length) {
+    el.innerHTML = `<p style="color:var(--gray-400);padding:20px 0;text-align:center">No listings yet. <a href="#" onclick="showSection('new-listing')" style="color:var(--teal)">Post your first one →</a></p>`;
+    return;
+  }
+  const rows = myListings.slice(0, 4).map(l => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+      <div>
+        <div style="font-weight:600">${TYPE_EMOJI[l.type] || '🚗'} ${escapeHtml(l.brand)} ${escapeHtml(l.model)} ${escapeHtml(String(l.year))}</div>
+        <div style="font-size:12px;color:var(--gray-400)">${Number(l.price).toLocaleString('en-ET')} ETB · ${escapeHtml(l.location)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        ${STATUS_HTML[l.status] || ''}
+        <span style="font-size:12px;color:var(--gray-400)">👁 ${l.views || 0}</span>
+      </div>
+    </div>`).join('');
+  el.innerHTML = rows + (myListings.length > 4
+    ? `<div style="padding-top:12px;text-align:center"><a href="#" onclick="showSection('my-listings')" style="color:var(--teal);font-size:13px">View all ${myListings.length} listings →</a></div>`
+    : '');
+}
+
+// ── Overview stat cards ──
+function renderOverviewStats() {
+  const active  = myListings.filter(l => l.status === 'approved').length;
+  const pending = myListings.filter(l => l.status === 'pending').length;
+  const views   = myListings.reduce((sum, l) => sum + (l.views || 0), 0);
+  document.getElementById('statActive').textContent  = active;
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('statViews').textContent   = views.toLocaleString('en-ET');
+  // Verified badge — check seller profile. Pass the user's phone from
+  // user_metadata if available so the sellers row is created with a phone
+  // on first visit (instead of null), which speeds up the verification flow.
+  const sellerPhone = user.phone || user.user_metadata?.phone || null;
+  getOrCreateSellerProfile(displayName, sellerPhone).then(profile => {
+    document.getElementById('statVerified').textContent = profile.verified ? '✓ Yes' : 'Not yet';
+    document.getElementById('statVerified').style.color = profile.verified ? 'var(--teal)' : 'var(--gray-400)';
+  }).catch(() => {
+    document.getElementById('statVerified').textContent = '—';
+  });
+}
+
+// ── Full My Listings table ──
+function renderMyListings() {
+  const tbody = document.getElementById('myListingsBody');
+  if (!myListings.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="color:var(--gray-400);text-align:center;padding:24px">
+      No listings yet. <a href="#" onclick="showSection('new-listing')" style="color:var(--teal)">Post your first one →</a>
+    </td></tr>`;
+    return;
+  }
+  tbody.innerHTML = myListings.map(l => {
+    const isFeaturedActive = l.featured && (!l.featured_expires_at || new Date(l.featured_expires_at) > new Date());
+    const actions = l.status === 'approved'
+      ? `<button class="btn btn-sm btn-gold" onclick="showSection('featured', '${l.id}')">⭐ Feature</button>`
+      : l.status === 'pending'
+      ? `<button class="btn btn-sm btn-outline" disabled style="opacity:0.5">Awaiting Review</button>`
+      : l.status === 'rejected'
+      ? `<button class="btn btn-sm btn-outline" onclick="showSection('new-listing')">Resubmit</button>`
+      : '';
+    return `
+      <tr>
+        <td>
+          <strong>${escapeHtml(l.brand)} ${escapeHtml(l.model)} ${escapeHtml(String(l.year))}</strong>
+          ${isFeaturedActive ? ' <span style="color:var(--gold);font-size:11px">⭐</span>' : ''}
+          <div style="font-size:11px;color:var(--gray-400)">${TYPE_EMOJI[l.type] || ''} ${escapeHtml(l.type)}</div>
+        </td>
+        <td>${Number(l.price).toLocaleString('en-ET')}</td>
+        <td>${escapeHtml(l.location)}</td>
+        <td>👁 ${l.views || 0}</td>
+        <td>${STATUS_HTML[l.status] || escapeHtml(l.status)}</td>
+        <td style="display:flex;gap:6px">${actions}</td>
+      </tr>`;
+  }).join('');
+}
+
+// ── Initial data load ──
+async function initDashboard() {
+  try {
+    await loadMyListings();
+  } catch (e) {
+    console.error('Could not load listings:', e);
+  }
+  renderOverviewStats();
+  renderOverviewListings();
+  // Show overview after auth is confirmed
+  showSection('overview');
+}
+
+initDashboard();
+
+// ════════════════════════════════════════════════════════
+//  SECTION ROUTING — refresh data when navigating
+// ════════════════════════════════════════════════════════
+const _baseShowSection = window.showSection;
+window.showSection = async function(name, arg) {
+  _baseShowSection(name, arg);
+  if (name === 'my-listings') {
+    document.getElementById('myListingsBody').innerHTML =
+      '<tr><td colspan="6" style="color:var(--gray-400);text-align:center;padding:24px">Loading…</td></tr>';
+    await loadMyListings();
+    renderMyListings();
+  }
+  if (name === 'featured')   populateFeaturedListingPicker(arg);
+  if (name === 'verify')     renderVerifyStatus();
+};
+
+// ════════════════════════════════════════════════════════
+//  NEW LISTING FORM
+// ════════════════════════════════════════════════════════
+const dashForm    = document.getElementById('dashListingForm');
+const dlSubmitBtn = document.getElementById('dlSubmitBtn');
+const dlUploadArea = document.getElementById('dlUploadArea');
+const dlPhotosInput = document.getElementById('dlPhotos');
+let selectedFiles = [];
+
+function renderDlPhotoPreviews() {
+  if (!dlUploadArea) return;
+  if (!selectedFiles.length) {
+    dlUploadArea.innerHTML = `<div class="upload-icon">📷</div><div class="upload-text">Click to upload photos (up to 8)</div>`;
+    return;
+  }
+  dlUploadArea.innerHTML = `
+    <div class="upload-text" style="margin-bottom:10px">📷 ${selectedFiles.length} photo${selectedFiles.length !== 1 ? 's' : ''} selected — <span style="color:var(--teal);cursor:pointer">add more</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      ${selectedFiles.map((f, i) => {
+        const url = URL.createObjectURL(f);
+        return `<div style="position:relative">
+          <img src="${url}" style="width:72px;height:54px;object-fit:cover;border-radius:6px;border:2px solid rgba(0,201,167,0.3)" />
+          <button type="button" class="dl-photo-remove-btn" data-index="${i}" style="position:absolute;top:-6px;right:-6px;background:var(--danger);border:none;color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;line-height:1">✕</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// Single delegated click handler: clicking a ✕ removes just that photo
+// (and must NOT also reopen the file picker, since the button sits
+// inside dlUploadArea and would otherwise bubble up into this same
+// handler); clicking anywhere else opens the file picker so you can
+// add more on top of what's already selected.
+dlUploadArea?.addEventListener('click', (e) => {
+  const removeBtn = e.target.closest('.dl-photo-remove-btn');
+  if (removeBtn) {
+    e.stopPropagation();
+    const index = Number(removeBtn.dataset.index);
+    selectedFiles.splice(index, 1);
+    renderDlPhotoPreviews();
+    return;
+  }
+  dlPhotosInput?.click();
+});
+
+dlPhotosInput?.addEventListener('change', (e) => {
+  // Append newly picked files to whatever's already selected (capped
+  // at 8) — so removing photo #5 and reopening the picker to add 3
+  // new ones keeps your other 4 and adds the new ones, instead of
+  // wiping the whole selection like this used to.
+  const newFiles = Array.from(e.target.files);
+  const combined = [...selectedFiles, ...newFiles];
+  if (combined.length > 8) {
+    window.showToast?.(`⚠️ Only 8 photos allowed — kept the first 8, dropped ${combined.length - 8}.`);
+  }
+  selectedFiles = combined.slice(0, 8);
+  renderDlPhotoPreviews();
+  // Reset the input's own value so picking the exact same file again
+  // later still fires a change event (browsers otherwise suppress it).
+  dlPhotosInput.value = '';
+});
+
+dashForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const statusBox = document.getElementById('newListingStatus');
+
+  const rawPhone = document.getElementById('dlPhone').value.trim();
+  const normalizedPhone = normalizeEthiopianPhone(rawPhone);
+  if (!normalizedPhone) {
+    statusBox.style.display = '';
+    statusBox.innerHTML = `<div style="background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);color:#ff8a8a;font-size:13px;padding:10px 12px;border-radius:8px">⚠️ Please enter a valid Ethiopian phone number (e.g. 0912 345 678).</div>`;
+    return;
+  }
+
+  const data = {
+    type:        document.getElementById('dlType').value,
+    condition:   document.getElementById('dlCondition').value,
+    brand:       document.getElementById('dlBrand').value.trim(),
+    model:       document.getElementById('dlModel').value.trim(),
+    year:        parseInt(document.getElementById('dlYear').value) || 0,
+    mileage:     parseInt(document.getElementById('dlMileage').value) || 0,
+    price:       parseInt(document.getElementById('dlPrice').value) || 0,
+    location:    document.getElementById('dlLocation').value,
+    phone:       normalizedPhone,
+    description: document.getElementById('dlDesc').value.trim(),
+    sellerName:  displayName,
+  };
+
+  const required = ['type','condition','brand','model','year','price','location','phone'];
+  if (required.some(k => !data[k])) {
+    statusBox.style.display = '';
+    statusBox.innerHTML = `<div style="background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);color:#ff8a8a;font-size:13px;padding:10px 12px;border-radius:8px">⚠️ Please fill in all required fields.</div>`;
+    return;
+  }
+
+  dlSubmitBtn.disabled = true;
+  dlSubmitBtn.textContent = selectedFiles.length ? 'Uploading photos…' : 'Submitting…';
+  statusBox.style.display = 'none';
+
+  try {
+    await submitListing(data, selectedFiles, (pct, i, total) => {
+      dlSubmitBtn.textContent = `📷 Uploading photo ${i + 1}/${total} (${pct}%)`;
+    });
+    statusBox.style.display = '';
+    statusBox.innerHTML = `<div style="background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.3);color:var(--teal);font-size:13px;padding:10px 12px;border-radius:8px">✅ Listing submitted! We'll review and publish within 24 hours.</div>`;
+    dashForm.reset();
+    selectedFiles = [];
+    renderDlPhotoPreviews();
+    // Refresh listing data in background
+    await loadMyListings();
+    renderOverviewStats();
+    renderOverviewListings();
+  } catch (err) {
+    statusBox.style.display = '';
+    statusBox.innerHTML = `<div style="background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);color:#ff8a8a;font-size:13px;padding:10px 12px;border-radius:8px">❌ ${escapeHtml(err.message)}</div>`;
+  } finally {
+    dlSubmitBtn.disabled = false;
+    dlSubmitBtn.textContent = 'Submit for Review';
+  }
+});
+
+// ════════════════════════════════════════════════════════
+//  VERIFICATION
+// ════════════════════════════════════════════════════════
+const verifyForm      = document.getElementById('verifyForm');
+const verifyStatusBox = document.getElementById('verifyStatusBox');
+const verifyDocInput  = document.getElementById('vDoc');
+
+document.getElementById('vDoc')?.addEventListener('change', () => {
+  document.getElementById('vDocLabel').textContent = verifyDocInput.files[0]?.name || 'Click to upload a clear photo';
+});
+
+async function renderVerifyStatus() {
+  if (!verifyStatusBox) return;
+  try {
+    const profile = await getOrCreateSellerProfile(displayName);
+    if (profile.verified) {
+      verifyStatusBox.innerHTML = `<div style="background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.3);color:var(--teal);font-size:14px;padding:14px;border-radius:8px">✓ You're verified! Your badge shows on all your listings.</div>`;
+      verifyForm.style.display = 'none';
+      return;
+    }
+    const lastRequest = await getMyVerificationStatus();
+    if (lastRequest?.status === 'pending') {
+      verifyStatusBox.innerHTML = `<div style="background:rgba(255,200,0,0.1);border:1px solid rgba(255,200,0,0.3);color:var(--gold);font-size:13px;padding:10px 12px;border-radius:8px">⏳ Your verification request is pending admin review.</div>`;
+      verifyForm.style.display = 'none';
+    } else if (lastRequest?.status === 'rejected') {
+      verifyStatusBox.innerHTML = `<div style="background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);color:#ff8a8a;font-size:13px;padding:10px 12px;border-radius:8px">Your previous request was not approved. You can submit again below.</div>`;
+      verifyForm.style.display = '';
+    } else {
+      verifyStatusBox.innerHTML = '';
+      verifyForm.style.display = '';
+    }
+  } catch (err) {
+    console.error('Failed to load verification status:', err);
+  }
+}
+
+verifyForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const fullName = document.getElementById('vFullName').value.trim();
+  const phone    = document.getElementById('vPhone').value.trim();
+  const note     = document.getElementById('vNote').value.trim();
+  const file     = verifyDocInput.files[0];
+  const btn      = document.getElementById('verifySubmitBtn');
+
+  if (!fullName || !phone || !file) {
+    window.showToast?.('⚠️ Please fill in all required fields and upload a document.');
+    return;
+  }
+
+  // Validate file size (max 5 MB) and MIME type before upload.
+  const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+  if (file.size > 5 * 1024 * 1024) {
+    window.showToast?.('⚠️ Document must be under 5 MB.');
+    return;
+  }
+  if (!ALLOWED_MIME.includes(file.type)) {
+    window.showToast?.('⚠️ Only JPEG, PNG, WebP, or PDF documents are accepted.');
+    return;
+  }
+
+  const normalizedPhone = normalizeEthiopianPhone(phone);
+  if (!normalizedPhone) {
+    window.showToast?.('⚠️ Please enter a valid Ethiopian phone number (e.g. 0912 345 678).');
+    return;
+  }
+
+  btn.textContent = 'Submitting…';
+  btn.disabled = true;
+  try {
+    await submitVerificationRequest({ fullName, phone: normalizedPhone, note }, file);
+    window.showToast?.('✅ Verification request submitted! We\'ll review it shortly.');
+    await renderVerifyStatus();
+  } catch (err) {
+    window.showToast?.(`❌ ${err.message}`);
+  } finally {
+    btn.textContent = 'Submit for Verification';
+    btn.disabled = false;
+  }
+});
+
+// ════════════════════════════════════════════════════════
+//  FEATURED LISTINGS / CHAPA PAYMENT
+// ════════════════════════════════════════════════════════
+const featListingSelect = document.getElementById('featListingSelect');
+const featPayBtn        = document.getElementById('featPayBtn');
+const featStatusBox     = document.getElementById('featPaymentStatus');
+
+async function populateFeaturedListingPicker(preselectId) {
+  if (!featListingSelect) return;
+  try {
+    const listings = await getMyListings();
+    const featurable = listings.filter(l => l.status === 'approved');
+    if (!featurable.length) {
+      featListingSelect.innerHTML = '<option value="">No approved listings yet</option>';
+      featPayBtn.disabled = true;
+      return;
+    }
+    featListingSelect.innerHTML = featurable.map(l => `
+      <option value="${escapeHtml(l.id)}">${escapeHtml(l.brand)} ${escapeHtml(l.model)} ${escapeHtml(String(l.year))} — ${Number(l.price).toLocaleString('en-ET')} ETB${l.featured ? ' (already Featured)' : ''}</option>
+    `).join('');
+    if (preselectId && featurable.some(l => l.id === preselectId)) {
+      featListingSelect.value = preselectId;
+    }
+    featPayBtn.disabled = false;
+  } catch (err) {
+    featListingSelect.innerHTML = '<option value="">Could not load listings</option>';
+  }
+}
+
+featPayBtn?.addEventListener('click', async () => {
+  const listingId = featListingSelect.value;
+  const plan = document.querySelector('input[name="featPlan"]:checked')?.value;
+  if (!listingId) { window.showToast?.('⚠️ Please choose a listing to feature.'); return; }
+
+  featPayBtn.textContent = 'Redirecting to Chapa…';
+  featPayBtn.disabled = true;
+  try {
+    const { checkout_url, tx_ref } = await startFeaturedPayment(listingId, plan);
+    // checkout_url comes from Chapa's API response via our own server —
+    // validate it's a real https:// URL before navigating the browser
+    // to it, so a malformed/tampered response can't become a
+    // javascript: URI or similar.
+    const parsed = new URL(checkout_url);
+    if (parsed.protocol !== 'https:') throw new Error('Received an unexpected payment link — please try again.');
+    sessionStorage.setItem('bb_pending_tx_ref', tx_ref);
+    window.location.href = parsed.href;
+  } catch (err) {
+    window.showToast?.(`❌ ${err.message}`);
+    featPayBtn.textContent = 'Pay via Chapa';
+    featPayBtn.disabled = false;
+  }
+});
+
+async function checkReturnFromPayment() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('payment') !== 'processing') return;
+  const txRef = sessionStorage.getItem('bb_pending_tx_ref');
+  if (!txRef) return;
+
+  showSection('featured');
+  featStatusBox.style.display = 'block';
+  featStatusBox.innerHTML = `<div style="background:rgba(255,200,0,0.1);border:1px solid rgba(255,200,0,0.3);color:var(--gold);font-size:13px;padding:10px 12px;border-radius:8px">⏳ Confirming your payment…</div>`;
+
+  for (let i = 0; i < 15; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      const result = await getPaymentStatus(txRef);
+      if (result.status === 'completed') {
+        featStatusBox.innerHTML = `<div style="background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.3);color:var(--teal);font-size:14px;padding:14px;border-radius:8px">✅ Payment confirmed! Your listing is now Featured.</div>`;
+        sessionStorage.removeItem('bb_pending_tx_ref');
+        await populateFeaturedListingPicker();
+        return;
+      }
+      if (result.status === 'failed') {
+        featStatusBox.innerHTML = `<div style="background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);color:#ff8a8a;font-size:13px;padding:10px 12px;border-radius:8px">❌ Payment did not complete. Please try again.</div>`;
+        sessionStorage.removeItem('bb_pending_tx_ref');
+        return;
+      }
+    } catch (err) { console.error('Status check failed:', err); }
+  }
+  featStatusBox.innerHTML = `<div style="background:rgba(255,200,0,0.1);border:1px solid rgba(255,200,0,0.3);color:var(--gold);font-size:13px;padding:10px 12px;border-radius:8px">Still confirming — refresh this page in a minute to check again.</div>`;
+}
+
+checkReturnFromPayment();
+
+// ════════════════════════════════════════════════════════
+//  BANK DETAILS SECTION
+// ════════════════════════════════════════════════════════
+
+const PAYMENT_API_BASE = (() => {
+  // Same origin detection as the rest of the app
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:3000';
+  }
+  return 'https://bridge-proxy-9kwv.vercel.app';
+})();
+
+async function loadBankSection() {
+  const statusBox = document.getElementById('bankStatusBox');
+  const select    = document.getElementById('bankSelect');
+  const form      = document.getElementById('bankForm');
+
+  // Load bank list from our proxy endpoint
+  try {
+    const res   = await fetch(`${PAYMENT_API_BASE}/api/banks`);
+    const data  = await res.json();
+    if (res.ok && data.banks?.length) {
+      select.innerHTML = '<option value="">— Choose your bank —</option>' +
+        data.banks.map(b => `<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
+    } else {
+      select.innerHTML = '<option value="">Could not load banks — try refreshing</option>';
+    }
+  } catch {
+    select.innerHTML = '<option value="">Could not load banks — try refreshing</option>';
+  }
+
+  // Pre-fill with saved details if any
+  try {
+    const saved = await getMyBankDetails();
+    if (saved?.bank_account_name) {
+      document.getElementById('bankName').value   = saved.bank_account_name;
+      document.getElementById('bankNumber').value = saved.bank_account_number || '';
+      if (saved.bank_code) {
+        // Wait for options to be available (they load above)
+        select.value = saved.bank_code;
+      }
+      const updated = saved.bank_updated_at
+        ? new Date(saved.bank_updated_at).toLocaleDateString('en-ET')
+        : '';
+      statusBox.innerHTML = `<div style="background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.3);color:var(--teal);font-size:13px;padding:10px 14px;border-radius:8px">
+        ✅ Bank details saved${updated ? ` — last updated ${updated}` : ''}. Update and save again to change them.
+      </div>`;
+    }
+  } catch { /* no saved details, that's fine */ }
+
+  // Save handler
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn           = document.getElementById('bankSaveBtn');
+    const bankName      = document.getElementById('bankName').value.trim();
+    const bankNumber    = document.getElementById('bankNumber').value.trim();
+    const bankCode      = select.value;
+
+    if (!bankName || !bankNumber || !bankCode) {
+      statusBox.innerHTML = `<div style="background:rgba(232,69,69,0.1);border:1px solid rgba(232,69,69,0.3);color:#ff8a8a;font-size:13px;padding:10px 14px;border-radius:8px">
+        ⚠️ Please fill in all three fields and choose a bank.
+      </div>`;
+      return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Saving…';
+    statusBox.innerHTML = '';
+
+    try {
+      await saveMyBankDetails({
+        bankAccountName:   bankName,
+        bankAccountNumber: bankNumber,
+        bankCode,
+      });
+      statusBox.innerHTML = `<div style="background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.3);color:var(--teal);font-size:14px;padding:12px 14px;border-radius:8px">
+        ✅ Bank details saved. Your payout will go here when a sale completes.
+      </div>`;
+    } catch (err) {
+      statusBox.innerHTML = `<div style="background:rgba(232,69,69,0.1);border:1px solid rgba(232,69,69,0.3);color:#ff8a8a;font-size:13px;padding:10px 14px;border-radius:8px">
+        ❌ ${escapeHtml(err.message)}
+      </div>`;
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'Save Bank Details';
+    }
+  });
+}
+
+// Load bank section when it becomes visible
+const origShowSection = window.showSection;
+window.showSection = function(name) {
+  origShowSection?.(name);
+  if (name === 'bank-details') loadBankSection();
+};
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+
+<!-- main.js is NOT loaded here intentionally: it registers a second onAuth()
+     listener, calls loadAndRenderListings() (no-op but wastes a Supabase
+     read), and re-initialises the listing form and login modal — none of
+     which exist on this page. The seller dashboard manages its own auth,
+     listings, and form logic in the <script type="module"> block above. -->
 </body>
 </html>

@@ -2,11 +2,55 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https://xrmbzycasbzdaolvtuop.supabase.co blob:; connect-src 'self' https://xrmbzycasbzdaolvtuop.supabase.co https://bridge-proxy-9kwv.vercel.app https://api.groq.com; frame-ancestors 'none';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Panel — Bridge Broker</title>
+  <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN GATE — shown until admin auth passes
+══════════════════════════════════════════ -->
+<div id="adminGate" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="width:100%;max-width:380px;background:var(--charcoal-mid);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:32px">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:32px;margin-bottom:8px">🌉</div>
+      <div style="font-size:18px;font-weight:700">Bridge Broker <span style="font-size:11px;background:var(--danger);color:var(--white);padding:2px 6px;border-radius:4px;margin-left:4px;font-weight:700">ADMIN</span></div>
+      <div id="gateSubtitle" style="font-size:13px;color:var(--gray-400);margin-top:6px">Sign in with your admin account</div>
+    </div>
+
+    <div id="gateError" style="display:none;background:rgba(255,77,77,0.1);border:1px solid rgba(255,77,77,0.3);color:#ff8a8a;font-size:13px;padding:10px 12px;border-radius:8px;margin-bottom:16px"></div>
+
+    <form id="adminLoginForm" novalidate>
+      <div class="form-group">
+        <label for="adminEmail">Email</label>
+        <input type="email" id="adminEmail" placeholder="you@email.com" required autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label for="adminPassword">Password</label>
+        <input type="password" id="adminPassword" placeholder="••••••••" required autocomplete="current-password" />
+      </div>
+      <button type="submit" id="adminLoginBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;margin-top:8px">
+        Sign In
+      </button>
+    </form>
+
+    <div id="gateChecking" style="display:none;text-align:center;color:var(--gray-400);font-size:13px;padding:20px 0">
+      Checking your session…
+    </div>
+
+    <div style="text-align:center;margin-top:18px">
+      <a href="index.html" style="font-size:13px;color:var(--gray-400)">← Back to site</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     DASHBOARD — hidden until admin auth passes
+══════════════════════════════════════════ -->
+<div id="adminDashboard" style="display:none">
 
 <nav class="navbar">
   <div class="container">
@@ -15,280 +59,1585 @@
       <span class="nav-logo-text">Bridge <span>Broker</span> <span style="font-size:11px;background:var(--danger);color:var(--white);padding:2px 6px;border-radius:4px;margin-left:6px;font-weight:700">ADMIN</span></span>
     </a>
     <div class="nav-actions">
-      <span style="font-size:13px;color:var(--gray-400)">Logged in as Admin</span>
+      <span id="adminWhoami" style="font-size:13px;color:var(--gray-400)">Logged in as Admin</span>
+      <button id="adminLogoutBtn" class="btn btn-outline btn-sm">Logout</button>
       <a href="index.html" class="btn btn-outline btn-sm">View Site</a>
     </div>
+    <!-- Only visible below 900px (see CSS) — the admin sidebar itself
+         is hidden at that width, so this is the only way to switch
+         sections on tablet/phone without it. -->
+    <button class="admin-sidebar-toggle" id="adminSidebarToggle" aria-label="Open admin menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
 
 <div class="admin-layout">
-
-  <!-- ADMIN SIDEBAR -->
-  <aside class="admin-sidebar sidebar">
+  <aside class="admin-sidebar sidebar" id="adminSidebar">
     <div class="sidebar-section">
       <div class="sidebar-label">Admin</div>
-      <a href="#" class="sidebar-link active">
-        <span class="icon">📊</span> Overview
-      </a>
-      <a href="#" class="sidebar-link" onclick="switchTab('pending')">
-        <span class="icon">⏳</span> Pending Listings
-        <span class="admin-badge">3</span>
-      </a>
-      <a href="#" class="sidebar-link" onclick="switchTab('all-listings')">
-        <span class="icon">📋</span> All Listings
-      </a>
-      <a href="#" class="sidebar-link" onclick="switchTab('users')">
-        <span class="icon">👥</span> Users & Sellers
-      </a>
+      <a href="#" class="sidebar-link active" data-section="overview"><span class="icon">📊</span> Overview</a>
+      <a href="#" class="sidebar-link" data-section="pending" onclick="loadPending(); document.getElementById('pendingList').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">⏳</span> Pending Listings <span class="admin-badge" id="pendingCount">…</span></a>
+      <a href="#" class="sidebar-link" data-section="verify" onclick="loadVerifications(); document.getElementById('verifyList').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">🪪</span> Verification Requests <span class="admin-badge" id="verifyCount">…</span></a>
+      <a href="#" class="sidebar-link" data-section="all-listings" onclick="loadAllListings(); document.getElementById('allListingsList').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">📋</span> All Listings</a>
+      <a href="#" class="sidebar-link" data-section="users" onclick="loadUsersAndSellers(); document.getElementById('usersSellersList').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">👥</span> Users & Sellers</a>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-label">Monetization</div>
-      <a href="#" class="sidebar-link" onclick="switchTab('payments')">
-        <span class="icon">💰</span> Payments
-      </a>
-      <a href="#" class="sidebar-link" onclick="switchTab('featured')">
-        <span class="icon">⭐</span> Featured Listings
-      </a>
-      <a href="#" class="sidebar-link">
-        <span class="icon">⚙️</span> Commission Settings
-      </a>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-label">Security</div>
-      <a href="#" class="sidebar-link">
-        <span class="icon">🚨</span> Fraud Reports
-        <span class="admin-badge">1</span>
-      </a>
-      <a href="#" class="sidebar-link">
-        <span class="icon">🔒</span> Banned Users
-      </a>
+      <a href="#" class="sidebar-link" data-section="payments" onclick="loadPayments(); document.getElementById('paymentsList').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">💰</span> Payments</a>
+      <a href="#" class="sidebar-link" data-section="escrow" onclick="loadEscrow(); document.getElementById('escrowList').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">🔒</span> Escrow <span class="admin-badge" id="escrowHeldCount">…</span></a>
+      <a href="#" class="sidebar-link" data-section="featured" onclick="loadFeaturedListings(); document.getElementById('featuredList').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">⭐</span> Featured Listings</a>
+      <a href="#" class="sidebar-link" data-section="commission" onclick="loadCommissionSettings(); document.getElementById('commissionSettingsForm').closest('.table-card').scrollIntoView({behavior:'smooth'})"><span class="icon">⚙️</span> Commission Settings</a>
     </div>
   </aside>
 
-  <!-- ADMIN MAIN -->
   <main class="dashboard-main">
+    <div class="dash-header">
+      <h1 class="dash-title" id="dashTitle">Pending Listings — Review & Approve</h1>
+      <p class="dash-subtitle" id="dashSubtitle">Replace seller phone with your broker number before approving</p>
+    </div>
 
-    <!-- OVERVIEW -->
-    <div id="tab-overview">
-      <div class="dash-header">
-        <h1 class="dash-title">Admin Overview</h1>
-        <p class="dash-subtitle">Platform health snapshot — updated live</p>
+    <!-- Stats -->
+    <div class="stats-row" id="adminStats">
+      <div class="stat-card"><div class="stat-card-label">Total Listings</div><div class="stat-card-value" id="statTotal">…</div></div>
+      <div class="stat-card"><div class="stat-card-label">Pending Review</div><div class="stat-card-value" style="color:var(--gold)" id="statPending">…</div></div>
+      <div class="stat-card"><div class="stat-card-label">Approved</div><div class="stat-card-value" id="statApproved">…</div></div>
+      <div class="stat-card"><div class="stat-card-label">Sold</div><div class="stat-card-value" style="color:var(--teal)" id="statSold">…</div></div>
+    </div>
+
+    <!-- Pending listings -->
+    <div class="table-card">
+      <div class="table-card-header">
+        <h2 class="table-card-title">⏳ Pending Listings</h2>
+        <button class="btn btn-sm btn-outline" onclick="loadPending()">🔄 Refresh</button>
       </div>
-
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-card-label">Total Listings</div>
-          <div class="stat-card-value">342</div>
-          <div class="stat-card-change">↑ 12 this week</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Pending Review</div>
-          <div class="stat-card-value" style="color:var(--gold)">3</div>
-          <div class="stat-card-change" style="color:var(--gold)">Needs attention</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Revenue (ETB)</div>
-          <div class="stat-card-value">12,400</div>
-          <div class="stat-card-change">↑ 2,200 this month</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Active Sellers</div>
-          <div class="stat-card-value">87</div>
-          <div class="stat-card-change">↑ 5 this week</div>
-        </div>
+      <div id="pendingList" style="padding:16px">
+        <p style="color:var(--gray-400)">Loading…</p>
       </div>
+    </div>
 
-      <!-- Quick revenue breakdown -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
-        <div class="stat-card" style="border-color:rgba(245,166,35,0.3)">
-          <div class="stat-card-label">Featured Listing Fees</div>
-          <div class="stat-card-value" style="color:var(--gold)">8,200 ETB</div>
-          <div class="stat-card-change">41 featured slots sold</div>
-        </div>
-        <div class="stat-card" style="border-color:rgba(0,201,167,0.3)">
-          <div class="stat-card-label">Verified Badge Subs</div>
-          <div class="stat-card-value" style="color:var(--teal)">4,200 ETB</div>
-          <div class="stat-card-change">14 active subscriptions</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Pending Payouts</div>
-          <div class="stat-card-value">0 ETB</div>
-          <div class="stat-card-change">No pending payouts</div>
-        </div>
+    <!-- Verification requests -->
+    <div class="table-card" style="margin-top:20px">
+      <div class="table-card-header">
+        <h2 class="table-card-title">🪪 Verification Requests</h2>
+        <button class="btn btn-sm btn-outline" onclick="loadVerifications()">🔄 Refresh</button>
       </div>
+      <div id="verifyList" style="padding:16px">
+        <p style="color:var(--gray-400)">Loading…</p>
+      </div>
+    </div>
 
-      <!-- PENDING LISTINGS -->
-      <div class="table-card" style="margin-bottom:20px">
-        <div class="table-card-header">
-          <h2 class="table-card-title">⏳ Pending Listings — Needs Review</h2>
-          <span class="admin-badge" style="font-size:13px;padding:4px 10px">3 pending</span>
-        </div>
-        <div style="overflow-x:auto">
-          <table>
-            <thead>
-              <tr>
-                <th>Vehicle</th>
-                <th>Seller</th>
-                <th>Price (ETB)</th>
-                <th>Location</th>
-                <th>Submitted</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="pendingTable">
-              <tr data-id="p1">
-                <td><strong>Haojue HJ125 2023</strong> — Motorcycle</td>
-                <td>Sinx (Rode Star Motors) <span class="verified-badge">✓</span></td>
-                <td>88,000</td>
-                <td>Adama</td>
-                <td>2h ago</td>
-                <td style="display:flex;gap:6px;padding:14px 16px">
-                  <button class="btn btn-sm btn-primary" onclick="approveListing('p1')">✓ Approve</button>
-                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="rejectListing('p1')">✕ Reject</button>
-                </td>
-              </tr>
-              <tr data-id="p2">
-                <td><strong>Toyota Corolla 2016</strong> — Car</td>
-                <td>Dawit Tadesse</td>
-                <td>1,100,000</td>
-                <td>Addis Ababa</td>
-                <td>5h ago</td>
-                <td style="display:flex;gap:6px;padding:14px 16px">
-                  <button class="btn btn-sm btn-primary" onclick="approveListing('p2')">✓ Approve</button>
-                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="rejectListing('p2')">✕ Reject</button>
-                </td>
-              </tr>
-              <tr data-id="p3">
-                <td><strong>Bajaj RE 4S 2020</strong> — Bajaj</td>
-                <td>Unknown Seller</td>
-                <td style="color:var(--danger)">12,000 ⚠️</td>
-                <td>Dire Dawa</td>
-                <td>8h ago</td>
-                <td style="display:flex;gap:6px;padding:14px 16px">
-                  <button class="btn btn-sm btn-primary" onclick="approveListing('p3')">✓ Approve</button>
-                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="rejectListing('p3')">✕ Reject</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+    <!-- All listings (approved/sold) — mark off-platform sales, track commission -->
+    <div class="table-card" style="margin-top:20px">
+      <div class="table-card-header">
+        <h2 class="table-card-title">📋 All Listings</h2>
+        <button class="btn btn-sm btn-outline" onclick="loadAllListings()">🔄 Refresh</button>
+      </div>
+      <div style="padding:16px;font-size:12px;color:var(--gray-400);margin-bottom:4px">
+        Most sales happen off-platform — buyer and seller meet directly. When a listing sells,
+        click <strong>Mark as Sold</strong> to record the final price; commission owed is
+        calculated from the rate you set when approving it. If the sale went through Escrow
+        instead, it's already marked sold automatically and the commission was deducted from
+        the payout — no need to do it again here.<br><br>
+        Once a listing is sold, you can also <strong>Delete Photos</strong> to free up storage —
+        this only removes the images; the sale record, price, and commission info stay intact.
+      </div>
+      <div id="allListingsList" style="padding:0 16px 16px">
+        <p style="color:var(--gray-400)">Loading…</p>
+      </div>
+    </div>
+
+    <!-- Payments -->
+    <div class="table-card" style="margin-top:20px">
+      <div class="table-card-header">
+        <h2 class="table-card-title">💰 Recent Payments</h2>
+        <button class="btn btn-sm btn-outline" onclick="loadPayments()">🔄 Refresh</button>
+      </div>
+      <div style="padding:16px;font-size:12px;color:var(--gray-400);margin-bottom:4px">
+        Payments are written only by the Chapa webhook after server-side verification — nothing here can be edited manually.
+      </div>
+      <div id="paymentsList" style="padding:0 16px 16px">
+        <p style="color:var(--gray-400)">Loading…</p>
+      </div>
+    </div>
+
+    <!-- Escrow (optional protection — broker handoff is still the default) -->
+    <div class="table-card" style="margin-top:20px">
+      <div class="table-card-header">
+        <h2 class="table-card-title">🔒 Escrow Transactions</h2>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-primary" onclick="openEscrowCreate()">+ Create Escrow Link</button>
+          <button class="btn btn-sm btn-outline" onclick="loadEscrow()">🔄 Refresh</button>
         </div>
       </div>
-
-      <!-- ALL LISTINGS QUICK VIEW -->
-      <div class="table-card">
-        <div class="table-card-header">
-          <h2 class="table-card-title">All Active Listings</h2>
-          <input type="text" placeholder="Search listings..." style="background:var(--charcoal-light);border:1px solid rgba(255,255,255,0.1);color:var(--white);padding:7px 12px;border-radius:6px;font-size:13px;outline:none" />
-        </div>
-        <div style="overflow-x:auto">
-          <table>
-            <thead>
-              <tr>
-                <th>Vehicle</th>
-                <th>Type</th>
-                <th>Seller</th>
-                <th>Price (ETB)</th>
-                <th>Views</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>Toyota Vitz 2015</strong></td>
-                <td>🚗 Car</td>
-                <td>Abebe Kebede <span class="verified-badge">✓</span></td>
-                <td>1,250,000</td>
-                <td>134</td>
-                <td><span class="status-badge status-active">Featured</span></td>
-                <td>
-                  <button class="btn btn-sm btn-outline" onclick="showToast('View listing details')">View</button>
-                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white);padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:13px" onclick="showToast('Listing removed!')">Remove</button>
-                </td>
-              </tr>
-              <tr>
-                <td><strong>TVS King Bajaj 2024</strong></td>
-                <td>🛺 Bajaj</td>
-                <td>Rode Star Motors <span class="verified-badge">✓</span></td>
-                <td>185,000</td>
-                <td>87</td>
-                <td><span class="status-badge status-active">Active</span></td>
-                <td>
-                  <button class="btn btn-sm btn-outline" onclick="showToast('View listing details')">View</button>
-                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white);padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:13px" onclick="showToast('Listing removed!')">Remove</button>
-                </td>
-              </tr>
-              <tr>
-                <td><strong>Suzuki Dzire 2018</strong></td>
-                <td>🚗 Car</td>
-                <td>Mohammed Ali <span class="verified-badge">✓</span></td>
-                <td>980,000</td>
-                <td>72</td>
-                <td><span class="status-badge status-active">Featured</span></td>
-                <td>
-                  <button class="btn btn-sm btn-outline" onclick="showToast('View listing details')">View</button>
-                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white);padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:13px" onclick="showToast('Listing removed!')">Remove</button>
-                </td>
-              </tr>
-              <tr>
-                <td><strong>Haojue HJ150 2022</strong></td>
-                <td>🏍️ Motorcycle</td>
-                <td>Tigist Alemu</td>
-                <td>95,000</td>
-                <td>45</td>
-                <td><span class="status-badge status-active">Active</span></td>
-                <td>
-                  <button class="btn btn-sm btn-outline" onclick="showToast('View listing details')">View</button>
-                  <button class="btn btn-sm" style="background:var(--danger);color:var(--white);padding:6px 12px;border-radius:6px;border:none;cursor:pointer;font-size:13px" onclick="showToast('Listing removed!')">Remove</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div style="padding:16px;font-size:12px;color:var(--gray-400);margin-bottom:4px">
+        Most sales still happen the normal way — buyer and seller meet and hand off directly.
+        Use this only when a buyer asks for protection: they pay the full price into escrow,
+        it shows as <strong>held</strong> here, and you release it to the seller (or refund it)
+        once the handoff is confirmed.<br><br>
+        <span style="color:var(--teal)">✅ <strong>Payout is automatic:</strong></span> When you click <strong>Release & Pay</strong>, your commission is deducted and the seller's cut is immediately queued for bank transfer via Chapa. The seller must have saved their bank details in <em>Seller Dashboard → Bank Details</em> first — if they haven't, you'll see a "Pay Seller" button to retry once they do.
       </div>
+      <div id="escrowList" style="padding:0 16px 16px">
+        <p style="color:var(--gray-400)">Loading…</p>
+      </div>
+    </div>
 
-    </div><!-- /tab-overview -->
+    <!-- Users & Sellers -->
+    <div class="table-card" style="margin-top:20px">
+      <div class="table-card-header">
+        <h2 class="table-card-title">👥 Users & Sellers</h2>
+        <button class="btn btn-sm btn-outline" onclick="loadUsersAndSellers()">🔄 Refresh</button>
+      </div>
+      <div style="padding:16px;font-size:12px;color:var(--gray-400);margin-bottom:4px">
+        Sellers who have created a profile (e.g. submitted a listing or a verification request). "Listings" counts everything they've posted, regardless of status. Toggling Verified here does the same thing as approving a verification request — it can also be used to revoke a badge.
+      </div>
+      <div id="usersSellersList" style="padding:0 16px 16px">
+        <p style="color:var(--gray-400)">Loading…</p>
+      </div>
+    </div>
 
+    <!-- Featured Listings -->
+    <div class="table-card" style="margin-top:20px">
+      <div class="table-card-header">
+        <h2 class="table-card-title">⭐ Featured Listings</h2>
+        <button class="btn btn-sm btn-outline" onclick="loadFeaturedListings()">🔄 Refresh</button>
+      </div>
+      <div style="padding:16px;font-size:12px;color:var(--gray-400);margin-bottom:4px">
+        Listings currently boosted to the top of the site. They drop off automatically once <code>featured_expires_at</code> passes (handled by the <code>expire-featured</code> cron job) — you can also remove the boost early here.
+      </div>
+      <div id="featuredList" style="padding:0 16px 16px">
+        <p style="color:var(--gray-400)">Loading…</p>
+      </div>
+    </div>
+
+    <!-- Commission Settings -->
+    <div class="table-card" style="margin-top:20px">
+      <div class="table-card-header">
+        <h2 class="table-card-title">⚙️ Commission Settings</h2>
+      </div>
+      <div style="padding:16px;font-size:12px;color:var(--gray-400);margin-bottom:4px">
+        These are just the <strong>defaults pre-filled</strong> in the Approve Listing modal — every listing's actual rate is still set (and can be overridden) at approval time, and a sale's <code>commission_owed</code> is locked in at the moment it's marked sold, so changing these later never affects past sales.<br><br>
+        Saved to this browser only (<code>localStorage</code>), since there's no settings table in the database — if you approve listings from a different device/browser, set these there too.
+      </div>
+      <div id="commissionSettingsForm" style="padding:0 16px 16px"></div>
+    </div>
   </main>
 </div>
 
-<style>
-@keyframes slideUp {
-  from{opacity:0;transform:translate(-50%,20px)}
-  to{opacity:1;transform:translate(-50%,0)}
-}
-</style>
-<script type="module" src="js/main.js"></script>
-<script>
-function switchTab(tab) {
-  showToast(`${tab} tab — coming in next version`);
+<!-- Create Escrow Modal -->
+<div id="escrowCreateModal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:var(--charcoal);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;width:100%;max-width:480px;margin:16px">
+    <h2 style="margin-bottom:4px;font-size:20px">🔒 Create Escrow Link</h2>
+    <p style="color:var(--gray-400);font-size:13px;margin-bottom:20px">Only works for already-approved listings. Send the resulting link to the buyer yourself.</p>
+
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Listing ID</label>
+      <input type="text" id="escListingId" placeholder="paste the listing's id" style="width:100%;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);color:var(--white);padding:10px 14px;border-radius:8px;font-size:15px;outline:none" />
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Agreed Price (ETB)</label>
+      <input type="number" id="escAmount" placeholder="e.g. 450000" style="width:100%;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);color:var(--white);padding:10px 14px;border-radius:8px;font-size:15px;outline:none" />
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Buyer Name</label>
+      <input type="text" id="escBuyerName" placeholder="Abebe Kebede" style="width:100%;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);color:var(--white);padding:10px 14px;border-radius:8px;font-size:15px;outline:none" />
+    </div>
+    <div class="form-group" style="margin-bottom:12px">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Buyer Phone</label>
+      <input type="tel" id="escBuyerPhone" placeholder="+251 9XX XXX XXX" style="width:100%;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);color:var(--white);padding:10px 14px;border-radius:8px;font-size:15px;outline:none" />
+    </div>
+    <div class="form-group" style="margin-bottom:8px">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Buyer Email (optional, Chapa likes one)</label>
+      <input type="email" id="escBuyerEmail" placeholder="buyer@email.com" style="width:100%;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);color:var(--white);padding:10px 14px;border-radius:8px;font-size:15px;outline:none" />
+    </div>
+
+    <div id="escCreateResult" style="margin-top:10px;font-size:13px"></div>
+
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-primary" id="escCreateBtn" style="flex:1;justify-content:center" onclick="submitEscrowCreate()">Create Link</button>
+      <button class="btn btn-outline" onclick="closeEscrowCreate()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Approve Modal -->
+<div id="approveModal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:var(--charcoal);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;width:100%;max-width:480px;margin:16px">
+    <h2 style="margin-bottom:4px;font-size:20px">✅ Approve Listing</h2>
+    <p style="color:var(--gray-400);font-size:13px;margin-bottom:20px">Replace the seller's phone with your broker number before publishing.</p>
+
+    <div id="modalListingInfo" style="background:var(--charcoal-light);border-radius:10px;padding:14px;margin-bottom:16px;font-size:14px;line-height:1.8"></div>
+
+    <div class="form-group">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Broker Phone Number (replaces seller number)</label>
+      <input type="tel" id="brokerPhone" value="+251 96X XXX XXXX"
+        style="width:100%;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);color:var(--white);padding:10px 14px;border-radius:8px;font-size:15px;outline:none" />
+    </div>
+
+    <div class="form-group" style="margin-top:14px">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Broker Telegram Username (optional — leave blank to hide Telegram button)</label>
+      <div style="display:flex;align-items:center;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);border-radius:8px;overflow:hidden">
+        <span style="padding:10px 0 10px 14px;color:var(--gray-400);font-size:15px">t.me/</span>
+        <input type="text" id="brokerTelegram" placeholder="your_username"
+          style="flex:1;background:transparent;border:none;color:var(--white);padding:10px 14px 10px 4px;font-size:15px;outline:none" />
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-top:14px">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Commission Rate — told to seller before this listing goes live (% of final sale price)</label>
+      <div style="display:flex;align-items:center;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);border-radius:8px;overflow:hidden">
+        <input type="number" id="commissionPercent" placeholder="5" min="0" max="100" step="0.1"
+          style="flex:1;background:transparent;border:none;color:var(--white);padding:10px 4px 10px 14px;font-size:15px;outline:none" />
+        <span style="padding:10px 14px 10px 0;color:var(--gray-400);font-size:15px">%</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="confirmApprove()">✅ Approve & Publish</button>
+      <button class="btn btn-outline" onclick="closeApproveModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mark as Sold Modal -->
+<div id="markSoldModal" class="modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:var(--charcoal);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;width:100%;max-width:480px;margin:16px">
+    <h2 style="margin-bottom:4px;font-size:20px">💰 Mark as Sold</h2>
+    <p style="color:var(--gray-400);font-size:13px;margin-bottom:20px">Record the final agreed sale price. Commission owed is calculated from the rate set when this listing was approved.</p>
+
+    <div id="soldListingInfo" style="background:var(--charcoal-light);border-radius:10px;padding:14px;margin-bottom:16px;font-size:14px;line-height:1.8"></div>
+
+    <div class="form-group">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Final Sale Price (ETB)</label>
+      <input type="number" id="salePrice" min="1" step="1" oninput="updateCommissionPreview()"
+        style="width:100%;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);color:var(--white);padding:10px 14px;border-radius:8px;font-size:15px;outline:none" />
+    </div>
+
+    <div style="margin-top:14px;padding:12px 14px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.25);border-radius:8px;font-size:13px">
+      Commission owed: <strong id="commissionPreview" style="color:var(--teal)">—</strong>
+    </div>
+
+    <p style="color:var(--gray-400);font-size:12px;margin-top:12px">
+      This sale is recorded as off-platform — the commission is <strong>not</strong> collected automatically.
+      You'll see a "Mark Commission Collected" button afterward once you've received it.
+    </p>
+
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="confirmMarkSold()">💰 Mark as Sold</button>
+      <button class="btn btn-outline" onclick="closeMarkSoldModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /#adminDashboard -->
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+const SUPABASE_URL = 'https://xrmbzycasbzdaolvtuop.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_EIjYMLjXtbdfL-J1gs-B4g_DPjL0qzh';
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Broker's own number — change this to your real number
+const BROKER_PHONE = '+251 900 000 000'; // ← set this to your real broker number
+// Default Telegram username pre-filled in the approve modal (no @).
+// Leave empty to start each approval with a blank Telegram field.
+const BROKER_TELEGRAM_DEFAULT = '';
+// Default commission % pre-filled in the approve modal. Set to your
+// usual rate so you only have to change it for listings that get a
+// different deal — leave 0/blank to require entering it every time.
+const COMMISSION_PERCENT_DEFAULT = '';
+
+let pendingToApprove = null;
+let pendingListingsById = new Map();
+
+// ── XSS PROTECTION ───────────────────────────────────
+// Same helper as js/main.js. Escape ALL user-submitted strings before
+// placing them into innerHTML — pending listings and verification
+// requests come from public/seller-submitted forms, so this data is
+// untrusted and rendered inside the admin's own logged-in session.
+// Without this, a malicious "description" or "full name" could run
+// JS as the admin (steal their session, approve itself, etc).
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-function approveListing(id) {
-  const row = document.querySelector(`tr[data-id="${id}"]`);
-  if (row) {
-    row.style.opacity = '0.4';
-    row.style.transition = '0.4s';
-    setTimeout(() => row.remove(), 400);
-    showToast('✅ Listing approved and published!');
-    // Update badge count
-    const badge = document.querySelector('.admin-badge');
-    if (badge) {
-      const n = parseInt(badge.textContent) - 1;
-      badge.textContent = n > 0 ? n : '0';
+// ══════════════════════════════════════════════════════
+//  AUTH GATE — nothing in the dashboard runs until this
+//  confirms the logged-in user is in the `admins` table.
+//  NOTE: this UI check is a convenience only. The real
+//  protection is the Row Level Security policies in
+//  sql/setup_admin_security.sql — without those, this gate
+//  can be bypassed by calling the Supabase API directly.
+// ══════════════════════════════════════════════════════
+const gateEl       = document.getElementById('adminGate');
+const dashboardEl  = document.getElementById('adminDashboard');
+const gateErrorEl  = document.getElementById('gateError');
+const gateForm     = document.getElementById('adminLoginForm');
+const gateChecking = document.getElementById('gateChecking');
+const gateSubtitle = document.getElementById('gateSubtitle');
+
+function showGateError(msg) {
+  gateErrorEl.textContent = msg;
+  gateErrorEl.style.display = 'block';
+}
+function hideGateError() {
+  gateErrorEl.style.display = 'none';
+}
+
+async function checkAdminAndEnter(showCheckingState) {
+  if (showCheckingState) {
+    gateForm.style.display = 'none';
+    gateChecking.style.display = 'block';
+  }
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const user = sessionData.session?.user;
+
+  if (!user) {
+    gateForm.style.display = '';
+    gateChecking.style.display = 'none';
+    return false;
+  }
+
+  const { data: adminRow, error } = await supabase
+    .from('admins')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (error || !adminRow) {
+    // Logged in, but not an admin — sign them out of this panel
+    // and show a clear message rather than a confusing dead end.
+    await supabase.auth.signOut();
+    gateForm.style.display = '';
+    gateChecking.style.display = 'none';
+    showGateError('This account does not have admin access.');
+    return false;
+  }
+
+  // ✅ Confirmed admin — show dashboard
+  document.getElementById('adminWhoami').textContent = `Logged in as ${user.email}`;
+  gateEl.style.display = 'none';
+  dashboardEl.style.display = '';
+  loadStats();
+  loadPending();
+  loadVerifications();
+  loadAllListings();
+  loadPayments();
+  loadEscrow();
+  loadUsersAndSellers();
+  loadFeaturedListings();
+  loadCommissionSettings();
+  return true;
+}
+
+// ── Sidebar active-link highlight + page header ────────
+// The HTML only ever marks "Overview" as .active by default, and the
+// <h1>/<p> header text was hardcoded to the Pending Listings copy —
+// neither ever updated on click, so the highlight and header text
+// stayed stuck regardless of which section you were actually viewing.
+// Each link already has its own onclick for loading data + scrolling;
+// this just additionally swaps the highlight and header text, without
+// touching that existing per-link logic.
+const SECTION_HEADERS = {
+  overview:      ['Overview', "Today's snapshot across listings, sales, and commission"],
+  pending:       ['Pending Listings — Review & Approve', 'Replace seller phone with your broker number before approving'],
+  verify:        ['Verification Requests', 'Approve or reject seller identity verification submissions'],
+  'all-listings':['All Listings', 'Mark sales, track commission, and manage live listings'],
+  users:         ['Users & Sellers', "Every seller who's created a profile, and their verification status"],
+  payments:      ['Payments', 'Featured-listing payments confirmed by the Chapa webhook'],
+  escrow:        ['Escrow Transactions', 'Optional buyer protection — release or refund held funds'],
+  featured:      ['Featured Listings', 'Listings currently boosted to the top of the site'],
+  commission:    ['Commission Settings', 'Default phone, Telegram, and commission rate for new approvals'],
+};
+
+document.getElementById('adminSidebar')?.addEventListener('click', (e) => {
+  const link = e.target.closest('.sidebar-link');
+  if (!link) return;
+  document.querySelectorAll('.sidebar-link.active').forEach(el => el.classList.remove('active'));
+  link.classList.add('active');
+
+  const section = link.dataset.section;
+  const header = SECTION_HEADERS[section];
+  if (header) {
+    document.getElementById('dashTitle').textContent = header[0];
+    document.getElementById('dashSubtitle').textContent = header[1];
+  }
+
+  // On mobile the sidebar is an overlay panel (see CSS) — close it
+  // once a section is picked, otherwise it stays covering the screen
+  // after the click already scrolled the page underneath it.
+  closeMobileSidebar();
+});
+
+// ── Mobile sidebar toggle ───────────────────────────────
+// Below 900px .admin-sidebar is hidden by default (see CSS) with no
+// other way to reach it — this hamburger is the only way to open it
+// on tablet/phone.
+const sidebarToggleBtn = document.getElementById('adminSidebarToggle');
+const adminSidebarEl = document.getElementById('adminSidebar');
+
+function closeMobileSidebar() {
+  adminSidebarEl?.classList.remove('mobile-open');
+  sidebarToggleBtn?.setAttribute('aria-expanded', 'false');
+}
+
+sidebarToggleBtn?.addEventListener('click', () => {
+  const isOpen = adminSidebarEl?.classList.toggle('mobile-open');
+  sidebarToggleBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+});
+
+// "Overview" has no existing onclick (nothing to load — it's just the
+// stats row at the very top), so give it one here: scroll to the
+// stats and re-fetch them, matching the refresh-on-click behavior
+// every other sidebar link already has.
+document.querySelector('.sidebar-link[data-section="overview"]')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  loadStats();
+  document.getElementById('adminStats')?.scrollIntoView({ behavior: 'smooth' });
+});
+
+gateForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideGateError();
+  const email    = document.getElementById('adminEmail').value.trim();
+  const password = document.getElementById('adminPassword').value;
+  const btn      = document.getElementById('adminLoginBtn');
+
+  btn.textContent = 'Signing in…';
+  btn.disabled = true;
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    showGateError(error.message === 'Invalid login credentials'
+      ? 'Incorrect email or password.'
+      : error.message);
+    btn.textContent = 'Sign In';
+    btn.disabled = false;
+    return;
+  }
+
+  btn.textContent = 'Sign In';
+  btn.disabled = false;
+  await checkAdminAndEnter(true);
+});
+
+document.getElementById('adminLogoutBtn').addEventListener('click', async () => {
+  await supabase.auth.signOut();
+  dashboardEl.style.display = 'none';
+  gateEl.style.display = '';
+  gateForm.reset();
+  gateForm.style.display = '';
+  gateChecking.style.display = 'none';
+  hideGateError();
+});
+
+// On page load, silently check for an existing session before
+// showing the login form (so already-logged-in admins skip straight in).
+checkAdminAndEnter(true);
+
+
+// ── Load stats ──────────────────────────────────────
+async function loadStats() {
+  const [total, pending, approved, sold] = await Promise.all([
+    supabase.from('listings').select('id', { count: 'exact', head: true }),
+    supabase.from('listings').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('listings').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+    supabase.from('listings').select('id', { count: 'exact', head: true }).eq('status', 'sold'),
+  ]);
+  document.getElementById('statTotal').textContent    = total.count    || 0;
+  document.getElementById('statPending').textContent  = pending.count  || 0;
+  document.getElementById('statApproved').textContent = approved.count || 0;
+  document.getElementById('pendingCount').textContent = pending.count  || 0;
+  const soldEl = document.getElementById('statSold');
+  if (soldEl) soldEl.textContent = sold.count || 0;
+}
+
+// ── Load pending listings ───────────────────────────
+window.loadPending = async function() {
+  const list = document.getElementById('pendingList');
+  list.innerHTML = '<p style="color:var(--gray-400)">Loading…</p>';
+
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  if (error || !data?.length) {
+    list.innerHTML = '<p style="color:var(--gray-400);padding:20px 0">No pending listings 🎉</p>';
+    return;
+  }
+
+  // Keep the raw (unescaped) rows around so openApproveModal/rejectListing
+  // can look them up by id, instead of round-tripping listing data through
+  // a JSON string embedded in an onclick="" attribute (that was itself a
+  // second injection point — a stray quote in the description could break
+  // out of the attribute).
+  pendingListingsById = new Map(data.map(l => [l.id, l]));
+
+  list.innerHTML = data.map(l => {
+    const eId          = escapeHtml(l.id);
+    const eBrand       = escapeHtml(l.brand);
+    const eModel       = escapeHtml(l.model);
+    const eYear        = escapeHtml(String(l.year));
+    const eType        = escapeHtml(l.type);
+    const eCondition   = escapeHtml(l.condition);
+    const eLocation    = escapeHtml(l.location);
+    const eSellerName  = escapeHtml(l.seller_name);
+    const ePhone       = escapeHtml(l.phone);
+    const eDescription = l.description ? escapeHtml(l.description) : '';
+    const ePhotoUrl    = l.photos?.length ? escapeHtml(l.photos[0]) : '';
+    return `
+    <div style="border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:14px;background:var(--charcoal-light)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px">${eBrand} ${eModel} ${eYear}</div>
+          <div style="font-size:13px;color:var(--gray-400);margin-bottom:8px">
+            ${eType} · ${eCondition} · ${eLocation} · 
+            <span style="color:var(--teal);font-weight:600">${Number(l.price).toLocaleString()} ETB</span>
+          </div>
+          <div style="font-size:13px;margin-bottom:4px">
+            👤 <strong>${eSellerName}</strong> &nbsp;|&nbsp; 
+            📞 Seller phone: <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px">${ePhone}</code>
+          </div>
+          ${eDescription ? `<div style="font-size:12px;color:var(--gray-400);margin-top:6px">${eDescription}</div>` : ''}
+        </div>
+        ${ePhotoUrl ? `<img src="${ePhotoUrl}" style="width:100px;height:75px;object-fit:cover;border-radius:8px;flex-shrink:0" />` : ''}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-primary btn-sm" onclick="openApproveModal('${eId}')">✅ Review & Approve</button>
+        <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="rejectListing('${eId}')">✕ Reject</button>
+      </div>
+    </div>
+  `;
+  }).join('');
+}
+
+// ── Open approve modal ──────────────────────────────
+window.openApproveModal = function(listingId) {
+  const listing = pendingListingsById.get(listingId);
+  if (!listing) { showToast('❌ Could not find that listing — try refreshing.'); return; }
+  pendingToApprove = listing;
+  document.getElementById('brokerPhone').value = getBrokerPhone();
+  document.getElementById('brokerTelegram').value = listing.telegram || getBrokerTelegramDefault();
+  document.getElementById('commissionPercent').value = listing.commission_percent ?? getCommissionPercentDefault();
+  document.getElementById('modalListingInfo').innerHTML = `
+    <strong>${escapeHtml(listing.brand)} ${escapeHtml(listing.model)} ${escapeHtml(String(listing.year))}</strong><br>
+    Price: ${Number(listing.price).toLocaleString()} ETB<br>
+    Seller: ${escapeHtml(listing.seller_name)}<br>
+    Seller phone: <span style="color:var(--danger)">${escapeHtml(listing.phone)}</span> → will be replaced
+    ${listing.telegram ? `<br>Current Telegram: <span style="color:var(--gray-400)">t.me/${escapeHtml(listing.telegram)}</span>` : ''}
+  `;
+  const modal = document.getElementById('approveModal');
+  modal.style.display = 'flex';
+}
+
+window.closeApproveModal = function() {
+  document.getElementById('approveModal').style.display = 'none';
+  pendingToApprove = null;
+}
+
+// ── Confirm approve — replace phone + publish ───────
+window.confirmApprove = async function() {
+  if (!pendingToApprove) return;
+  const brokerPhone = document.getElementById('brokerPhone').value.trim();
+  if (!brokerPhone) { alert('Please enter your broker phone number.'); return; }
+
+  // Telegram is optional. Accept a bare username, an @username, or a
+  // full t.me/ link pasted by mistake, and normalize to a bare username.
+  let brokerTelegram = document.getElementById('brokerTelegram').value.trim();
+  brokerTelegram = brokerTelegram
+    .replace(/^https?:\/\/(www\.)?t\.me\//i, '')
+    .replace(/^@/, '')
+    .trim();
+
+  // Telegram is optional, but if something was entered it must look like
+  // a real Telegram username — otherwise the public "Telegram" button on
+  // this listing silently links to a broken t.me/... URL with no warning,
+  // and that typo would sit live until someone notices. Real Telegram
+  // usernames: 5-32 chars, letters/numbers/underscores, must start with
+  // a letter.
+  if (brokerTelegram && !/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(brokerTelegram)) {
+    alert(
+      'That doesn\'t look like a valid Telegram username.\n\n' +
+      'Telegram usernames are 5–32 characters, letters/numbers/underscores only, ' +
+      'and must start with a letter (e.g. sintayehu_broker).\n\n' +
+      'Leave the field blank if you don\'t want to show a Telegram button for this listing.'
+    );
+    return;
+  }
+
+  // Commission is required — the whole point is the seller is told
+  // the rate before the listing goes live, so we don't let an
+  // approval through silently with no rate set.
+  const commissionRaw = document.getElementById('commissionPercent').value.trim();
+  const commissionPercent = commissionRaw === '' ? null : Number(commissionRaw);
+  if (commissionRaw === '' || isNaN(commissionPercent) || commissionPercent < 0 || commissionPercent > 100) {
+    alert('Please enter a commission rate between 0 and 100 (tell the seller this rate before approving).');
+    return;
+  }
+
+  const btn = document.querySelector('#approveModal .btn-primary');
+  btn.textContent = 'Publishing…';
+  btn.disabled = true;
+
+  const { error } = await supabase
+    .from('listings')
+    .update({ status: 'approved', phone: brokerPhone, telegram: brokerTelegram || null, commission_percent: commissionPercent })
+    .eq('id', pendingToApprove.id);
+
+  if (error) {
+    alert('Error: ' + error.message);
+    btn.textContent = '✅ Approve & Publish';
+    btn.disabled = false;
+    return;
+  }
+
+  closeApproveModal();
+  showToast('✅ Listing approved! Broker phone set. Now live on site.');
+  loadPending();
+  loadStats();
+  loadAllListings();
+}
+
+// ── Reject listing ──────────────────────────────────
+window.rejectListing = async function(id) {
+  if (!confirm('Reject this listing?')) return;
+  const { error } = await supabase.from('listings').update({ status: 'rejected' }).eq('id', id);
+  if (error) { alert('Error: ' + error.message); return; }
+  showToast('✕ Listing rejected.');
+  loadPending();
+  loadStats();
+}
+
+// ── Load verification requests ───────────────────────
+window.loadVerifications = async function() {
+  const list = document.getElementById('verifyList');
+  list.innerHTML = '<p style="color:var(--gray-400)">Loading…</p>';
+
+  const { data, error } = await supabase
+    .from('verification_requests')
+    .select('*')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  document.getElementById('verifyCount').textContent = data?.length || 0;
+
+  if (error || !data?.length) {
+    list.innerHTML = '<p style="color:var(--gray-400);padding:20px 0">No pending verification requests 🎉</p>';
+    return;
+  }
+
+  list.innerHTML = data.map(r => {
+    // Raw values go into data-* attributes (HTML-escaped for attribute context).
+    // We never place them inside onclick="fn('${val}')" strings — that pattern
+    // is vulnerable to JS injection even after HTML-escaping, because a single
+    // quote in the value breaks out of the JS string literal.
+    const eId       = escapeHtml(r.id);
+    const eUserId   = escapeHtml(r.user_id);
+    const eFullName = escapeHtml(r.full_name);
+    const ePhone    = escapeHtml(r.phone);
+    const eNote     = r.note ? escapeHtml(r.note) : '';
+    const eDocUrl   = r.id_document_url ? escapeHtml(r.id_document_url) : '';
+    return `
+    <div style="border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:14px;background:var(--charcoal-light)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px">${eFullName}</div>
+          <div style="font-size:13px;color:var(--gray-400);margin-bottom:8px">
+            📞 <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px">${ePhone}</code>
+            &nbsp;·&nbsp; Submitted ${new Date(r.created_at).toLocaleDateString()}
+          </div>
+          ${eNote ? `<div style="font-size:12px;color:var(--gray-400);margin-bottom:8px">📝 ${eNote}</div>` : ''}
+          ${eDocUrl
+            ? `<button class="btn btn-sm btn-outline" data-action="view-doc" data-docpath="${eDocUrl}">🪪 View Document</button>`
+            : '<span style="font-size:12px;color:var(--gray-400)">No document attached</span>'}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-primary btn-sm" data-action="approve-verify" data-id="${eId}" data-userid="${eUserId}">✅ Approve & Verify</button>
+        <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" data-action="reject-verify" data-id="${eId}">✕ Reject</button>
+      </div>
+    </div>
+  `;
+  }).join('');
+}
+
+// ── Delegated listener for verification card buttons ─────────────────────────
+// Reads action and data from data-* attributes so no user-controlled value
+// ever appears inside a JS string in the HTML template (XSS prevention).
+document.getElementById('verifyList').addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+  if (action === 'view-doc')       viewVerificationDoc(btn.dataset.docpath);
+  if (action === 'approve-verify') approveVerification(btn.dataset.id, btn.dataset.userid);
+  if (action === 'reject-verify')  rejectVerification(btn.dataset.id);
+});
+
+// ── View uploaded ID/license document ────────────────
+window.viewVerificationDoc = async function(path) {
+  const { data, error } = await supabase.storage
+    .from('verification-docs')
+    .createSignedUrl(path, 60 * 10);
+  if (error) { alert('Could not load document: ' + error.message); return; }
+  window.open(data.signedUrl, '_blank');
+}
+
+// ── Approve verification — marks request approved AND
+//    flips sellers.verified = true ──────────────────
+window.approveVerification = async function(requestId, userId) {
+  if (!confirm('Approve this seller as Verified? Their badge will appear on all their listings immediately.')) return;
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const adminId = sessionData.session?.user?.id;
+
+  const { error: reqErr } = await supabase
+    .from('verification_requests')
+    .update({ status: 'approved', reviewed_by: adminId, reviewed_at: new Date().toISOString() })
+    .eq('id', requestId);
+  if (reqErr) { alert('Error: ' + reqErr.message); return; }
+
+  const { error: sellerErr } = await supabase
+    .from('sellers')
+    .update({ verified: true, verified_at: new Date().toISOString(), verified_by: adminId })
+    .eq('user_id', userId);
+  if (sellerErr) { alert('Error: ' + sellerErr.message); return; }
+
+  showToast('✅ Seller verified! Badge is now live.');
+  loadVerifications();
+}
+
+// ── Reject verification request ──────────────────────
+window.rejectVerification = async function(requestId) {
+  if (!confirm('Reject this verification request?')) return;
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const adminId = sessionData.session?.user?.id;
+
+  const { error } = await supabase
+    .from('verification_requests')
+    .update({ status: 'rejected', reviewed_by: adminId, reviewed_at: new Date().toISOString() })
+    .eq('id', requestId);
+  if (error) { alert('Error: ' + error.message); return; }
+
+  showToast('✕ Verification request rejected.');
+  loadVerifications();
+}
+
+// ── Load payments (read-only — written only by webhook) ──
+window.loadPayments = async function() {
+  const list = document.getElementById('paymentsList');
+  list.innerHTML = '<p style="color:var(--gray-400)">Loading…</p>';
+
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error || !data?.length) {
+    list.innerHTML = '<p style="color:var(--gray-400);padding:20px 0">No payments yet.</p>';
+    return;
+  }
+
+  const statusColor = { completed: 'var(--teal)', pending: 'var(--gold)', failed: 'var(--danger)' };
+  const planLabel = { featured_1week: 'Featured — 1 week', featured_4weeks: 'Featured — 4 weeks' };
+
+  list.innerHTML = `
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Plan</th><th>Amount</th><th>Method</th><th>Status</th><th>Tx Ref</th></tr>
+        </thead>
+        <tbody>
+          ${data.map(p => `
+            <tr>
+              <td>${new Date(p.created_at).toLocaleString()}</td>
+              <td>${escapeHtml(planLabel[p.plan] || p.plan)}</td>
+              <td>${Number(p.amount).toLocaleString()} ${escapeHtml(p.currency)}</td>
+              <td>${escapeHtml(p.method || '—')}</td>
+              <td><span style="color:${statusColor[p.status] || 'var(--gray-400)'};font-weight:600">${escapeHtml(p.status)}</span></td>
+              <td><code style="font-size:11px">${escapeHtml(p.tx_ref)}</code></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+// ── Escrow (optional protection on top of the default broker handoff) ──
+const PAYMENT_API_BASE = 'https://bridge-proxy-9kwv.vercel.app'; // same Vercel project as payment-init.js
+
+async function getAccessToken() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token;
+}
+
+const escrowStatusColor = {
+  pending: 'var(--gray-400)', held: 'var(--gold)', released: 'var(--teal)',
+  refunded: 'var(--gray-400)', disputed: 'var(--danger)', cancelled: 'var(--gray-400)',
+};
+
+window.loadEscrow = async function() {
+  const list = document.getElementById('escrowList');
+  list.innerHTML = '<p style="color:var(--gray-400)">Loading…</p>';
+
+  const { data, error } = await supabase
+    .from('escrow_transactions')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  document.getElementById('escrowHeldCount').textContent =
+    data ? data.filter(e => e.status === 'held' || e.status === 'disputed').length : '0';
+
+  if (error || !data?.length) {
+    list.innerHTML = '<p style="color:var(--gray-400);padding:20px 0">No escrow transactions yet.</p>';
+    return;
+  }
+
+  list.innerHTML = `
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Listing</th><th>Buyer</th><th>Amount</th><th>Status</th><th>Payout</th><th>Tx Ref</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          ${data.map(e => {
+            const payoutCell = e.status === 'released'
+              ? e.payout_transfer_ref
+                ? `<span style="color:var(--teal);font-size:12px">✅ Queued<br><code style="font-size:10px">${escapeHtml(e.payout_transfer_ref)}</code></span>`
+                : `<span style="color:var(--danger);font-size:12px">⚠ Not sent</span>`
+              : '—';
+
+            const payoutBtn = e.status === 'released' && !e.payout_transfer_ref
+              ? `<button class="btn btn-sm btn-gold" onclick="retrySellerpayout('${escapeHtml(e.tx_ref)}')">💸 Pay Seller</button>`
+              : '';
+
+            return `
+            <tr>
+              <td>${new Date(e.created_at).toLocaleString()}</td>
+              <td><code style="font-size:11px">${escapeHtml(e.listing_id)}</code></td>
+              <td>${escapeHtml(e.buyer_name)}<br><span style="color:var(--gray-400);font-size:12px">${escapeHtml(e.buyer_phone)}</span></td>
+              <td>
+                ${Number(e.amount).toLocaleString()} ${escapeHtml(e.currency)}
+                ${e.commission_deducted != null ? `<br><span style="font-size:11px;color:var(--gray-400)">−${Number(e.commission_deducted).toLocaleString()} commission</span>` : ''}
+                ${e.payout_amount != null ? `<br><span style="font-size:11px;color:var(--teal)">→ ${Number(e.payout_amount).toLocaleString()} ETB to seller</span>` : ''}
+              </td>
+              <td><span style="color:${escrowStatusColor[e.status] || 'var(--gray-400)'};font-weight:600">${escapeHtml(e.status)}</span>
+                ${e.dispute_note ? `<br><span style="font-size:11px;color:var(--danger)">⚠ ${escapeHtml(e.dispute_note)}</span>` : ''}
+              </td>
+              <td>${payoutCell}</td>
+              <td><code style="font-size:11px">${escapeHtml(e.tx_ref)}</code></td>
+              <td style="display:flex;flex-direction:column;gap:4px;min-width:120px">
+                ${['held','disputed'].includes(e.status) ? `
+                  <button class="btn btn-sm btn-primary" onclick="escrowAction('${escapeHtml(e.tx_ref)}','release')">✅ Release & Pay</button>
+                  <button class="btn btn-sm btn-outline" onclick="escrowAction('${escapeHtml(e.tx_ref)}','refund')">↩ Refund</button>
+                  ${e.status !== 'disputed' ? `<button class="btn btn-sm btn-outline" onclick="escrowAction('${escapeHtml(e.tx_ref)}','dispute')">⚠ Dispute</button>` : ''}
+                ` : payoutBtn || '—'}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+window.escrowAction = async function(txRef, action) {
+  let note = null;
+  if (action === 'dispute') {
+    note = prompt('Describe the problem reported (shown to other admins):');
+    if (!note) return;
+  } else if (action === 'refund') {
+    note = prompt('Optional note for the record (e.g. why this is being refunded):') || '';
+  } else if (action === 'release') {
+    if (!confirm(
+      'Confirm the handoff went fine?\n\n' +
+      'This will:\n' +
+      '  1. Deduct your commission from the escrow amount\n' +
+      '  2. Automatically transfer the seller\'s cut to their registered bank account via Chapa\n' +
+      '  3. Mark the listing as Sold\n\n' +
+      'The seller must have saved their bank details in their Seller Dashboard first.'
+    )) return;
+    note = prompt('Optional note for the record:') || '';
+  }
+
+  const accessToken = await getAccessToken();
+  if (!accessToken) { showToast('⚠️ Please log in again.'); return; }
+
+  try {
+    // Step 1: Mark escrow as released and compute commission
+    const releaseRes = await fetch(`${PAYMENT_API_BASE}/api/escrow-action`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ txRef, action, note, accessToken }),
+    });
+    const releaseData = await releaseRes.json();
+    if (!releaseRes.ok) throw new Error(releaseData.error || 'Action failed.');
+
+    if (action === 'release' && releaseData.payout) {
+      const p = releaseData.payout;
+
+      // Step 2: Trigger automatic bank transfer to seller
+      showToast('✅ Escrow released — sending payout to seller…');
+
+      const payoutRes = await fetch(`${PAYMENT_API_BASE}/api/payout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ txRef, accessToken }),
+      });
+      const payoutData = await payoutRes.json();
+
+      if (payoutRes.ok && payoutData.ok) {
+        alert(
+          `✅ Done.\n\n` +
+          `Escrow amount:  ${p.escrowAmount.toLocaleString()} ETB\n` +
+          `Commission (${p.commissionPercent}%): ${p.commissionDeducted.toLocaleString()} ETB\n` +
+          `Seller payout:  ${p.sellerPayout.toLocaleString()} ETB\n\n` +
+          `Transfer queued to seller's bank (ref: ${payoutData.transferRef}).\n` +
+          `Chapa processes transfers Mon–Sat 08:30–16:30. The seller will receive the funds within that window.`
+        );
+      } else {
+        // Payout failed but escrow IS already released — warn admin to handle manually
+        alert(
+          `⚠️ Escrow released, but automatic bank transfer failed:\n\n` +
+          `${payoutData.error || 'Unknown error'}\n\n` +
+          `Commission (${p.commissionPercent}%): ${p.commissionDeducted.toLocaleString()} ETB\n` +
+          `➜ You need to manually send the seller: ${p.sellerPayout.toLocaleString()} ETB\n\n` +
+          `Most likely cause: seller has not saved their bank details yet.\n` +
+          `Ask them to go to Seller Dashboard → Bank Details and fill in their account, then use the "Pay Seller" button on the escrow row.`
+        );
+      }
+    } else if (action !== 'release') {
+      showToast(`✅ Escrow ${releaseData.status}.`);
+    }
+
+    loadEscrow();
+    loadAllListings();
+    loadStats();
+  } catch (err) {
+    showToast(`❌ ${err.message}`);
+  }
+}
+
+// Retry payout for a released escrow where the first attempt failed
+// (e.g. seller added bank details after the release was done)
+window.retrySellerpayout = async function(txRef) {
+  if (!confirm('Send the seller payout now?\n\nThe seller\'s bank details will be read from their profile. Make sure they\'ve saved them in the Seller Dashboard first.')) return;
+
+  const accessToken = await getAccessToken();
+  if (!accessToken) { showToast('⚠️ Please log in again.'); return; }
+
+  try {
+    showToast('Sending payout…');
+    const res = await fetch(`${PAYMENT_API_BASE}/api/payout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ txRef, accessToken }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Payout failed.');
+
+    if (data.alreadyPaid) {
+      showToast(`ℹ️ Already paid (ref: ${data.transferRef})`);
+    } else {
+      alert(
+        `✅ Transfer queued.\n\n` +
+        `Seller payout: ${Number(data.sellerPayout).toLocaleString()} ETB\n` +
+        `Reference: ${data.transferRef}\n\n` +
+        `Chapa processes Mon–Sat 08:30–16:30.`
+      );
+    }
+    loadEscrow();
+  } catch (err) {
+    showToast(`❌ ${err.message}`);
+  }
+}
+
+window.openEscrowCreate = function() {
+  // Unlike openApproveModal/openMarkSoldModal, this form isn't tied to
+  // a specific listing object to re-populate from — it was previously
+  // left with whatever was typed last time, which meant a second
+  // escrow link could accidentally reuse the prior buyer's name/phone/
+  // amount/listing id if the admin didn't notice. Clear explicitly.
+  document.getElementById('escListingId').value = '';
+  document.getElementById('escAmount').value = '';
+  document.getElementById('escBuyerName').value = '';
+  document.getElementById('escBuyerPhone').value = '';
+  document.getElementById('escBuyerEmail').value = '';
+  document.getElementById('escCreateResult').innerHTML = '';
+  document.getElementById('escrowCreateModal').style.display = 'flex';
+}
+window.closeEscrowCreate = function() {
+  document.getElementById('escrowCreateModal').style.display = 'none';
+}
+
+window.submitEscrowCreate = async function() {
+  const listingId  = document.getElementById('escListingId').value.trim();
+  const amount     = parseFloat(document.getElementById('escAmount').value);
+  const buyerName  = document.getElementById('escBuyerName').value.trim();
+  const buyerPhone = document.getElementById('escBuyerPhone').value.trim();
+  const buyerEmail = document.getElementById('escBuyerEmail').value.trim();
+  const resultEl   = document.getElementById('escCreateResult');
+  const btn        = document.getElementById('escCreateBtn');
+
+  if (!listingId || !amount || !buyerName || !buyerPhone) {
+    resultEl.innerHTML = '<span style="color:var(--danger)">Please fill in listing ID, amount, buyer name and phone.</span>';
+    return;
+  }
+
+  const accessToken = await getAccessToken();
+  if (!accessToken) { resultEl.innerHTML = '<span style="color:var(--danger)">Please log in again.</span>'; return; }
+
+  btn.textContent = 'Creating…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${PAYMENT_API_BASE}/api/escrow-init`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId, amount, buyerName, buyerPhone, buyerEmail, accessToken }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not create escrow link.');
+
+    // checkout_url comes from Chapa's API response, not something we
+    // generate ourselves — validate it's actually an https:// URL
+    // before putting it in an href/link text. This stops a malformed
+    // or tampered response (e.g. a "javascript:" URI) from running as
+    // script in the admin's session.
+    let safeCheckoutUrl;
+    try {
+      const parsed = new URL(data.checkout_url);
+      if (parsed.protocol !== 'https:') throw new Error('not https');
+      safeCheckoutUrl = parsed.href;
+    } catch {
+      throw new Error('Chapa returned an unexpected checkout link — please try again or check the Vercel logs.');
+    }
+
+    resultEl.innerHTML = `
+      <div style="background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.3);border-radius:8px;padding:12px;word-break:break-all">
+        ✅ Send this link to the buyer:<br>
+        <a href="${escapeHtml(safeCheckoutUrl)}" target="_blank" rel="noopener noreferrer" style="color:var(--teal)">${escapeHtml(safeCheckoutUrl)}</a>
+      </div>`;
+    loadEscrow();
+  } catch (err) {
+    resultEl.innerHTML = `<span style="color:var(--danger)">${escapeHtml(err.message)}</span>`;
+  } finally {
+    btn.textContent = 'Create Link';
+    btn.disabled = false;
+  }
+}
+
+
+// ── All Listings (approved + sold) — Mark as Sold flow ──
+let allListingsById = new Map();
+let pendingToMarkSold = null;
+
+window.loadAllListings = async function() {
+  const list = document.getElementById('allListingsList');
+  list.innerHTML = '<p style="color:var(--gray-400)">Loading…</p>';
+
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .in('status', ['approved', 'sold'])
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    list.innerHTML = `<p style="color:var(--danger)">Error: ${escapeHtml(error.message)}</p>`;
+    return;
+  }
+  if (!data?.length) {
+    list.innerHTML = '<p style="color:var(--gray-400);padding:20px 0">No approved listings yet.</p>';
+    return;
+  }
+
+  allListingsById = new Map(data.map(l => [l.id, l]));
+
+  list.innerHTML = data.map(l => {
+    const eId         = escapeHtml(l.id);
+    const eBrand      = escapeHtml(l.brand);
+    const eModel      = escapeHtml(l.model);
+    const eYear       = escapeHtml(String(l.year));
+    const eSellerName = escapeHtml(l.seller_name);
+    const isSold      = l.status === 'sold';
+    const commissionPct = l.commission_percent != null ? `${Number(l.commission_percent)}%` : '—';
+
+    const soldBlock = isSold ? `
+      <div style="font-size:13px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08)">
+        <span style="color:var(--teal);font-weight:600">💰 Sold for ${Number(l.sale_price).toLocaleString()} ETB</span>
+        &nbsp;|&nbsp; Commission owed: <strong>${l.commission_owed != null ? Number(l.commission_owed).toLocaleString() + ' ETB' : '—'}</strong>
+        &nbsp;|&nbsp; Status:
+        <span style="color:${l.commission_status === 'collected' ? 'var(--teal)' : l.commission_status === 'waived' ? 'var(--gray-400)' : 'var(--gold)'}">
+          ${escapeHtml(l.commission_status || 'owed')}
+        </span>
+        ${l.commission_note ? `<div style="color:var(--gray-400);margin-top:4px">📝 ${escapeHtml(l.commission_note)}</div>` : ''}
+      </div>` : '';
+
+    return `
+    <div style="border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:14px;background:var(--charcoal-light)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px">${eBrand} ${eModel} ${eYear}
+            ${isSold ? '<span style="font-size:11px;background:var(--teal);color:var(--charcoal);padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:700">SOLD</span>' : ''}
+          </div>
+          <div style="font-size:13px;color:var(--gray-400)">
+            👤 ${eSellerName} &nbsp;|&nbsp; Asking: <span style="color:var(--teal)">${Number(l.price).toLocaleString()} ETB</span>
+            &nbsp;|&nbsp; Commission rate: <strong>${commissionPct}</strong>
+          </div>
+          ${soldBlock}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        ${!isSold ? `
+          <button class="btn btn-primary btn-sm" onclick="openMarkSoldModal('${eId}')">💰 Mark as Sold</button>
+          <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="unpublishListing('${eId}')">🚫 Unpublish</button>
+        ` : ''}
+        ${isSold && l.commission_status === 'owed' ? `
+          <button class="btn btn-sm btn-outline" onclick="markCommissionCollected('${eId}')">✅ Mark Commission Collected</button>
+        ` : ''}
+        ${isSold && l.photos?.length ? `
+          <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="deleteListingPhotos('${eId}')">🗑️ Delete Photos</button>
+        ` : ''}
+      </div>
+    </div>
+  `;
+  }).join('');
+}
+
+// Pulls a live (approved) listing off the public site without marking it
+// sold or touching its commission/sale data. Sets status back to
+// 'rejected' — the listing row, photos, and seller info are all kept,
+// it just stops appearing on listings.html / index.html (those only
+// ever query status = 'approved'). The seller could in principle
+// resubmit; this isn't a permanent ban, just an unpublish.
+window.unpublishListing = async function(listingId) {
+  const listing = allListingsById.get(listingId);
+  if (!listing) { showToast('❌ Could not find that listing — try refreshing.'); return; }
+
+  const ok = confirm(
+    `Unpublish "${listing.brand} ${listing.model} ${listing.year}"?\n\n` +
+    `This removes it from the public site immediately. It is NOT marked as sold — ` +
+    `use "Mark as Sold" instead if the vehicle actually sold.\n\n` +
+    `The listing and its photos are kept, just hidden from buyers.`
+  );
+  if (!ok) return;
+
+  const { error } = await supabase
+    .from('listings')
+    .update({ status: 'rejected' })
+    .eq('id', listingId);
+
+  if (error) {
+    showToast(`❌ ${error.message}`);
+    return;
+  }
+
+  showToast('🚫 Listing unpublished — no longer visible on the site.');
+  loadAllListings();
+  loadStats();
+}
+
+window.openMarkSoldModal = function(listingId) {
+  const listing = allListingsById.get(listingId);
+  if (!listing) { showToast('❌ Could not find that listing — try refreshing.'); return; }
+  pendingToMarkSold = listing;
+  document.getElementById('soldListingInfo').innerHTML = `
+    <strong>${escapeHtml(listing.brand)} ${escapeHtml(listing.model)} ${escapeHtml(String(listing.year))}</strong><br>
+    Asking price: ${Number(listing.price).toLocaleString()} ETB<br>
+    Commission rate (set at approval): <strong>${listing.commission_percent != null ? Number(listing.commission_percent) + '%' : 'not set'}</strong>
+  `;
+  document.getElementById('salePrice').value = listing.price || '';
+  updateCommissionPreview();
+  document.getElementById('markSoldModal').style.display = 'flex';
+}
+
+window.closeMarkSoldModal = function() {
+  document.getElementById('markSoldModal').style.display = 'none';
+  pendingToMarkSold = null;
+}
+
+window.updateCommissionPreview = function() {
+  if (!pendingToMarkSold) return;
+  const salePrice = Number(document.getElementById('salePrice').value) || 0;
+  const pct = Number(pendingToMarkSold.commission_percent) || 0;
+  const owed = salePrice * pct / 100;
+  document.getElementById('commissionPreview').textContent =
+    `${owed.toLocaleString(undefined, { maximumFractionDigits: 2 })} ETB (${pct}% of ${salePrice.toLocaleString()} ETB)`;
+}
+
+window.confirmMarkSold = async function() {
+  if (!pendingToMarkSold) return;
+  const salePrice = Number(document.getElementById('salePrice').value);
+  if (!salePrice || salePrice <= 0) { alert('Please enter a valid final sale price.'); return; }
+  if (pendingToMarkSold.commission_percent == null) {
+    alert('This listing has no commission rate on record — re-approve it first to set one.');
+    return;
+  }
+
+  const commissionOwed = salePrice * Number(pendingToMarkSold.commission_percent) / 100;
+
+  const btn = document.querySelector('#markSoldModal .btn-primary');
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  const admin = await getSessionUser();
+  const { error } = await supabase
+    .from('listings')
+    .update({
+      status: 'sold',
+      sold_at: new Date().toISOString(),
+      sold_by: admin?.id || null,
+      sale_price: salePrice,
+      commission_owed: commissionOwed,
+      commission_status: 'owed',
+    })
+    .eq('id', pendingToMarkSold.id);
+
+  if (error) {
+    alert('Error: ' + error.message);
+    btn.textContent = '💰 Mark as Sold';
+    btn.disabled = false;
+    return;
+  }
+
+  closeMarkSoldModal();
+  showToast(`✅ Marked sold. Commission owed: ${commissionOwed.toLocaleString()} ETB`);
+  loadAllListings();
+  loadStats();
+}
+
+window.markCommissionCollected = async function(listingId) {
+  const note = prompt('Optional note (e.g. "cash, 22 Jun" or transfer reference):') || null;
+  const { error } = await supabase
+    .from('listings')
+    .update({ commission_status: 'collected', commission_note: note })
+    .eq('id', listingId);
+  if (error) { alert('Error: ' + error.message); return; }
+  showToast('✅ Commission marked as collected.');
+  loadAllListings();
+}
+
+// ── Delete photos for a sold listing (frees storage space) ──
+// Keeps the listing row itself — sale history and commission
+// records are never affected, only the image files are removed.
+window.deleteListingPhotos = async function(listingId) {
+  if (!confirm('Delete this listing\'s photos to free up storage?\n\nThe sale record, price, and commission info will be kept — only the images are removed, and this can\'t be undone.')) return;
+
+  const accessToken = await getAccessToken();
+  if (!accessToken) { showToast('⚠️ Please log in again.'); return; }
+
+  try {
+    const res = await fetch(`${PAYMENT_API_BASE}/api/delete-listing-photos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ listingId, accessToken }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not delete photos.');
+    showToast(`✅ Deleted ${data.deleted} photo(s).`);
+    loadAllListings();
+  } catch (err) {
+    showToast(`❌ ${err.message}`);
+  }
+}
+
+async function getSessionUser() {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user || null;
+}
+
+window.showToast = function(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.3);color:var(--white);padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;z-index:3000';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+// ══════════════════════════════════════════════════════
+//  Users & Sellers
+// ══════════════════════════════════════════════════════
+window.loadUsersAndSellers = async function() {
+  const list = document.getElementById('usersSellersList');
+  list.innerHTML = '<p style="color:var(--gray-400)">Loading…</p>';
+
+  const [{ data: sellers, error: sellersErr }, { data: listingCounts, error: listingsErr }] = await Promise.all([
+    supabase.from('sellers').select('*').order('created_at', { ascending: false }),
+    supabase.from('listings').select('seller_id')
+  ]);
+
+  if (sellersErr) {
+    list.innerHTML = `<p style="color:var(--danger)">Error: ${escapeHtml(sellersErr.message)}</p>`;
+    return;
+  }
+  if (!sellers?.length) {
+    list.innerHTML = '<p style="color:var(--gray-400);padding:20px 0">No sellers have registered a profile yet.</p>';
+    return;
+  }
+
+  // Count listings per seller_id client-side (small dataset; avoids a DB function).
+  const countsBySeller = new Map();
+  if (!listingsErr) {
+    for (const row of listingCounts) {
+      if (!row.seller_id) continue;
+      countsBySeller.set(row.seller_id, (countsBySeller.get(row.seller_id) || 0) + 1);
     }
   }
+
+  list.innerHTML = `
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Phone</th><th>Listings</th><th>Verified</th><th>Joined</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${sellers.map(s => {
+            const eUserId = escapeHtml(s.user_id);
+            const eName   = escapeHtml(s.display_name);
+            const ePhone  = escapeHtml(s.phone || '—');
+            const count   = countsBySeller.get(s.user_id) || 0;
+            return `
+            <tr>
+              <td>${eName}</td>
+              <td><code style="font-size:12px">${ePhone}</code></td>
+              <td>${count}</td>
+              <td>${s.verified
+                ? '<span style="color:var(--teal);font-weight:600">✓ Verified</span>'
+                : '<span style="color:var(--gray-400)">Not verified</span>'}</td>
+              <td>${new Date(s.created_at).toLocaleDateString()}</td>
+              <td>
+                ${s.verified
+                  ? `<button class="btn btn-sm btn-outline" onclick="toggleSellerVerified('${eUserId}', false)">Revoke</button>`
+                  : `<button class="btn btn-sm btn-primary" onclick="toggleSellerVerified('${eUserId}', true)">Verify</button>`}
+              </td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
-function rejectListing(id) {
-  const row = document.querySelector(`tr[data-id="${id}"]`);
-  if (row) {
-    row.style.opacity = '0.4';
-    row.style.transition = '0.4s';
-    setTimeout(() => row.remove(), 400);
-    showToast('✕ Listing rejected and seller notified.');
+window.toggleSellerVerified = async function(userId, makeVerified) {
+  if (!confirm(makeVerified ? 'Mark this seller as Verified? Their badge will appear immediately.' : 'Revoke this seller\'s Verified badge?')) return;
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const adminId = sessionData.session?.user?.id;
+
+  const { error } = await supabase
+    .from('sellers')
+    .update(makeVerified
+      ? { verified: true, verified_at: new Date().toISOString(), verified_by: adminId }
+      : { verified: false, verified_at: null, verified_by: null })
+    .eq('user_id', userId);
+
+  if (error) { showToast('❌ ' + error.message); return; }
+  showToast(makeVerified ? '✅ Seller verified.' : '✕ Verified badge revoked.');
+  loadUsersAndSellers();
+}
+
+// ══════════════════════════════════════════════════════
+//  Featured Listings
+// ══════════════════════════════════════════════════════
+window.loadFeaturedListings = async function() {
+  const list = document.getElementById('featuredList');
+  list.innerHTML = '<p style="color:var(--gray-400)">Loading…</p>';
+
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('featured', true)
+    .order('featured_expires_at', { ascending: true });
+
+  if (error) {
+    list.innerHTML = `<p style="color:var(--danger)">Error: ${escapeHtml(error.message)}</p>`;
+    return;
+  }
+  if (!data?.length) {
+    list.innerHTML = '<p style="color:var(--gray-400);padding:20px 0">No listings are currently featured.</p>';
+    return;
+  }
+
+  list.innerHTML = data.map(l => {
+    const eId    = escapeHtml(l.id);
+    const eTitle = `${escapeHtml(l.brand)} ${escapeHtml(l.model)} ${escapeHtml(String(l.year))}`;
+    const expires = l.featured_expires_at ? new Date(l.featured_expires_at) : null;
+    const expired = expires && expires < new Date();
+    return `
+    <div style="border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:14px;background:var(--charcoal-light)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px">⭐ ${eTitle}</div>
+          <div style="font-size:13px;color:var(--gray-400)">
+            👤 ${escapeHtml(l.seller_name)} &nbsp;|&nbsp; Asking: <span style="color:var(--teal)">${Number(l.price).toLocaleString()} ETB</span>
+            &nbsp;|&nbsp; Expires:
+            <span style="color:${expired ? 'var(--danger)' : 'var(--gold)'}">
+              ${expires ? expires.toLocaleString() : '—'}${expired ? ' (past — cron will clear this)' : ''}
+            </span>
+          </div>
+        </div>
+        <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="removeFeatured('${eId}')">Remove Featured</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.removeFeatured = async function(listingId) {
+  if (!confirm('Remove the Featured boost from this listing now?')) return;
+
+  const { error } = await supabase
+    .from('listings')
+    .update({ featured: false, featured_expires_at: null })
+    .eq('id', listingId);
+
+  if (error) { showToast('❌ ' + error.message); return; }
+  showToast('✕ Featured boost removed.');
+  loadFeaturedListings();
+}
+
+// ══════════════════════════════════════════════════════
+//  Commission Settings — stored in Supabase `admin_settings`
+//  table (one row, key/value pairs) so they survive across
+//  devices, browsers, and incognito sessions.
+//  localStorage is used only as a fast local cache; on every
+//  page load we fetch from Supabase and refresh the cache.
+//
+//  The admin_settings table must exist — run this once in
+//  Supabase SQL editor before using this panel:
+//
+//    create table if not exists public.admin_settings (
+//      key   text primary key,
+//      value text
+//    );
+//    alter table public.admin_settings enable row level security;
+//    create policy "Admins can read/write settings"
+//      on public.admin_settings for all
+//      using (exists (select 1 from public.admins a where a.user_id = auth.uid()))
+//      with check (exists (select 1 from public.admins a where a.user_id = auth.uid()));
+//
+// ══════════════════════════════════════════════════════
+const SETTINGS_KEYS = {
+  phone:      'bb_admin_broker_phone',
+  telegram:   'bb_admin_broker_telegram_default',
+  commission: 'bb_admin_commission_percent_default'
+};
+
+// ── Read from localStorage cache (fast, used for immediate pre-fill) ──
+function getBrokerPhone() {
+  return localStorage.getItem(SETTINGS_KEYS.phone) || BROKER_PHONE;
+}
+function getBrokerTelegramDefault() {
+  return localStorage.getItem(SETTINGS_KEYS.telegram) ?? BROKER_TELEGRAM_DEFAULT;
+}
+function getCommissionPercentDefault() {
+  return localStorage.getItem(SETTINGS_KEYS.commission) ?? COMMISSION_PERCENT_DEFAULT;
+}
+
+// ── Load from Supabase and refresh the cache ──
+// Called once on page load so the approve modal always has current defaults,
+// even on a new device or after another admin updated the settings.
+async function loadSettingsFromSupabase() {
+  try {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('key, value')
+      .in('key', Object.values(SETTINGS_KEYS));
+    if (error) throw error;
+    (data || []).forEach(row => {
+      if (row.value !== null) localStorage.setItem(row.key, row.value);
+    });
+  } catch (e) {
+    // Non-fatal — if the table doesn't exist yet, fall back to the
+    // localStorage cache or the hardcoded defaults above.
+    console.warn('admin_settings fetch failed, using local cache:', e.message);
   }
 }
+loadSettingsFromSupabase();
+
+window.loadCommissionSettings = function() {
+  const form = document.getElementById('commissionSettingsForm');
+  form.innerHTML = `
+    <div style="font-size:12px;color:var(--gray-400);margin-bottom:14px;background:rgba(255,200,0,0.08);border:1px solid rgba(255,200,0,0.2);border-radius:8px;padding:10px 12px">
+      ⚠️ These defaults are saved to Supabase and shared across all admin devices.
+      If the <code>admin_settings</code> table doesn't exist yet, see the comment
+      in admin.html near <code>loadCommissionSettings</code> for the setup SQL.
+    </div>
+    <div class="form-group" style="margin-top:6px">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Default Broker Phone Number</label>
+      <input type="tel" id="settingsBrokerPhone" value="${escapeHtml(getBrokerPhone())}"
+        style="width:100%;max-width:380px;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);color:var(--white);padding:10px 14px;border-radius:8px;font-size:15px;outline:none" />
+    </div>
+    <div class="form-group" style="margin-top:14px">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Default Broker Telegram Username (no @, leave blank to hide by default)</label>
+      <div style="display:flex;align-items:center;max-width:380px;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);border-radius:8px;overflow:hidden">
+        <span style="padding:10px 0 10px 14px;color:var(--gray-400);font-size:15px">t.me/</span>
+        <input type="text" id="settingsBrokerTelegram" value="${escapeHtml(getBrokerTelegramDefault())}"
+          style="flex:1;background:transparent;border:none;color:var(--white);padding:10px 14px 10px 4px;font-size:15px;outline:none" />
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:14px">
+      <label style="font-size:13px;color:var(--gray-400);margin-bottom:6px;display:block">Default Commission Rate (%)</label>
+      <div style="display:flex;align-items:center;max-width:200px;background:var(--charcoal-light);border:1px solid rgba(0,201,167,0.4);border-radius:8px;overflow:hidden">
+        <input type="number" id="settingsCommissionPercent" min="0" max="100" step="0.1" value="${escapeHtml(String(getCommissionPercentDefault()))}"
+          style="flex:1;background:transparent;border:none;color:var(--white);padding:10px 4px 10px 14px;font-size:15px;outline:none" />
+        <span style="padding:10px 14px 10px 0;color:var(--gray-400);font-size:15px">%</span>
+      </div>
+    </div>
+    <button class="btn btn-primary" style="margin-top:20px" onclick="saveCommissionSettings()">💾 Save Defaults</button>
+  `;
+}
+
+window.saveCommissionSettings = async function() {
+  const phone = document.getElementById('settingsBrokerPhone').value.trim();
+
+  let defaultTelegram = document.getElementById('settingsBrokerTelegram').value.trim()
+    .replace(/^https?:\/\/(www\.)?t\.me\//i, '')
+    .replace(/^@/, '')
+    .trim();
+  const telegramLooksOff = defaultTelegram && !/^[a-zA-Z][a-zA-Z0-9_]{4,31}$/.test(defaultTelegram);
+
+  const commission = document.getElementById('settingsCommissionPercent').value.trim();
+
+  // Update localStorage cache immediately (so the approve modal picks up
+  // the new values even if the Supabase write is slow)
+  localStorage.setItem(SETTINGS_KEYS.phone,      phone);
+  localStorage.setItem(SETTINGS_KEYS.telegram,   defaultTelegram);
+  localStorage.setItem(SETTINGS_KEYS.commission, commission);
+
+  // Persist to Supabase so other devices/admins see the same defaults
+  try {
+    const rows = [
+      { key: SETTINGS_KEYS.phone,      value: phone },
+      { key: SETTINGS_KEYS.telegram,   value: defaultTelegram },
+      { key: SETTINGS_KEYS.commission, value: commission },
+    ];
+    const { error } = await supabase
+      .from('admin_settings')
+      .upsert(rows, { onConflict: 'key' });
+    if (error) throw error;
+    showToast(telegramLooksOff
+      ? '⚠️ Saved to Supabase — but that Telegram username doesn\'t look valid.'
+      : '✅ Defaults saved to Supabase (shared across all admin devices).');
+  } catch (e) {
+    showToast(`⚠️ Saved locally — Supabase write failed: ${e.message}. Run the admin_settings setup SQL first.`);
+  }
+}
+
 </script>
 </body>
 </html>

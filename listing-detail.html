@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https://xrmbzycasbzdaolvtuop.supabase.co blob:; connect-src 'self' https://xrmbzycasbzdaolvtuop.supabase.co https://bridge-proxy-9kwv.vercel.app https://api.groq.com; frame-ancestors 'none';">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="View full vehicle listing details on Bridge Broker, Ethiopia's vehicle marketplace." />
+  <title>Listing — Bridge Broker</title>
+  <meta name="robots" content="noindex, follow" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%2300C9A7'/><text y='24' x='5' font-size='22'>🌉</text></svg>" />
+  <style>
+    .detail-wrap { max-width: 1000px; margin: 0 auto; padding: 32px 20px 64px; }
+    .detail-back { display: inline-flex; align-items: center; gap: 6px; color: var(--gray-400); text-decoration: none; font-size: 14px; margin-bottom: 20px; }
+    .detail-back:hover { color: var(--teal); }
+    .detail-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 32px; }
+    @media (max-width: 760px) { .detail-grid { grid-template-columns: 1fr; } }
+    .gallery-main { width: 100%; aspect-ratio: 4/3; background: var(--charcoal-light); border-radius: var(--radius-md); overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 96px; position: relative; }
+    .gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+    .gallery-thumbs { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .gallery-thumbs img { width: 70px; height: 52px; object-fit: cover; border-radius: 6px; cursor: pointer; border: 2px solid transparent; opacity: 0.7; }
+    .gallery-thumbs img.active { border-color: var(--teal); opacity: 1; }
+    .detail-badge-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .detail-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+    .detail-price { font-size: 28px; font-weight: 700; color: var(--teal); margin-bottom: 16px; }
+    .detail-meta { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .detail-meta span { font-size: 13px; color: var(--gray-400); display: flex; align-items: center; gap: 5px; }
+    .detail-desc { font-size: 14px; line-height: 1.7; color: var(--gray-200); margin-bottom: 22px; white-space: pre-wrap; }
+    .detail-seller { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .detail-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .detail-actions .btn { flex: 1; min-width: 140px; text-align: center; }
+    .detail-state { text-align: center; padding: 80px 20px; color: var(--gray-400); }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="container">
+    <a href="index.html" class="nav-logo" aria-label="Bridge Broker Home">
+      <div class="nav-logo-icon" aria-hidden="true">🌉</div>
+      <span class="nav-logo-text">Bridge <span>Broker</span></span>
+    </a>
+
+    <ul class="nav-links" role="list">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="listings.html" class="active">Listings</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <a href="index.html" class="btn btn-outline btn-sm">Login</a>
+      <a href="index.html" class="btn btn-primary btn-sm">Post Listing</a>
+    </div>
+
+    <button class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<main class="detail-wrap" id="detailRoot">
+  <a href="listings.html" class="detail-back">← Back to Listings</a>
+  <div id="detailContent" class="detail-state">Loading listing…</div>
+</main>
+
+<footer class="footer" id="contact-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="nav-logo">
+          <div class="nav-logo-icon">🌉</div>
+          <span class="nav-logo-text">Bridge <span>Broker</span></span>
+        </a>
+        <p class="footer-desc">Ethiopia's trusted vehicle marketplace. Connecting buyers and sellers of Cars, Motorcycles, and Bajajs across the country.</p>
+        <div class="social-links">
+          <a href="https://t.me/bridgebroker" class="social-link" target="_blank" rel="noopener" aria-label="Telegram">✈️</a>
+          <a href="https://wa.me/251900000000" class="social-link" target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>
+          <a href="https://tiktok.com/@bridgebroker" class="social-link" target="_blank" rel="noopener" aria-label="TikTok">🎵</a>
+          <a href="https://facebook.com/bridgebroker" class="social-link" target="_blank" rel="noopener" aria-label="Facebook">📘</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Vehicles</h4>
+        <ul>
+          <li><a href="listings.html?type=car">Cars</a></li>
+          <li><a href="listings.html?type=motorcycle">Motorcycles</a></li>
+          <li><a href="listings.html?type=bajaj">Bajajs</a></li>
+          <li><a href="listings.html?condition=new">Brand New</a></li>
+          <li><a href="listings.html?condition=used">Locally Used</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>For Sellers</h4>
+        <ul>
+          <li><a href="seller-dashboard.html">Seller Dashboard</a></li>
+          <li><a href="index.html">Post a Listing</a></li>
+          <li><a href="featured-listings.html">Featured Listings</a></li>
+          <li><a href="verified-broker-badge.html">Verified Broker Badge</a></li>
+          <li><a href="pricing.html">Pricing</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="how-it-works.html">How It Works</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
+          <li><a href="privacy-policy.html">Privacy Policy</a></li>
+          <li><a href="terms-of-service.html">Terms of Service</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Bridge Broker Ethiopia. All rights reserved.</span>
+      <span style="color:var(--teal)">🌉 Bridging Buyers & Sellers</span>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="js/main.js"></script>
+<script type="module">
+  import { getListingById, getVerifiedMap, incrementViews, photoUrl } from './js/supabase.js';
+
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  const root = document.getElementById('detailContent');
+  const id = new URLSearchParams(window.location.search).get('id');
+
+  function renderNotFound() {
+    root.className = 'detail-state';
+    root.innerHTML = `
+      <div style="font-size:48px;margin-bottom:12px">🔍</div>
+      <div>This listing isn't available — it may have been removed or isn't approved yet.</div>
+      <a href="listings.html" class="btn btn-primary btn-sm" style="margin-top:16px;display:inline-block">Browse other listings</a>
+    `;
+  }
+
+  async function init() {
+    if (!id) { renderNotFound(); return; }
+
+    let listing;
+    try {
+      listing = await getListingById(id);
+    } catch (err) {
+      console.error('Failed to load listing:', err);
+      renderNotFound();
+      return;
+    }
+    if (!listing) { renderNotFound(); return; }
+
+    // Use textContent assignment to strip any HTML characters from DB
+    // values before placing them in the page title (not an XSS risk, but
+    // prevents raw < > & chars appearing as-is in the browser tab/bookmark).
+    const titleEl = document.createElement('span');
+    titleEl.textContent = `${listing.brand} ${listing.model} ${listing.year}`;
+    document.title = `${titleEl.textContent} — Bridge Broker`;
+
+    let isVerified = false;
+    if (listing.seller_id) {
+      try {
+        const map = await getVerifiedMap([listing.seller_id]);
+        isVerified = map.get(listing.seller_id) === true;
+      } catch (e) { console.warn('Could not load verified status:', e); }
+    }
+
+    const typeEmoji = listing.type === 'car' ? '🚗' : listing.type === 'motorcycle' ? '🏍️' : '🛺';
+    const photos = Array.isArray(listing.photos) ? listing.photos : [];
+    const isFeaturedActive = listing.featured && (!listing.featured_expires_at || new Date(listing.featured_expires_at) > new Date());
+
+    const eBrand = escapeHtml(listing.brand);
+    const eModel = escapeHtml(listing.model);
+    const eYear = escapeHtml(String(listing.year));
+    const eLocation = escapeHtml(listing.location);
+    const eSeller = escapeHtml(listing.seller_name || 'Seller');
+    const eDesc = listing.description ? escapeHtml(listing.description) : 'No description provided.';
+    const ePhone = escapeHtml(listing.phone);
+    const rawPhone = listing.phone || '';
+    const safeTel = /^\+?[\d\s\-().]+$/.test(rawPhone) ? `tel:${ePhone}` : '#';
+    // Validate Telegram username format before building the href.
+    // Telegram usernames are 5–32 chars, alphanumeric + underscore only.
+    // If the stored value doesn't match, we suppress the button rather
+    // than risk building a malformed or unexpected t.me URL.
+    const rawTelegram = listing.telegram || '';
+    const validTelegram = /^[a-zA-Z0-9_]{5,32}$/.test(rawTelegram) ? rawTelegram : '';
+    const eTelegram = escapeHtml(validTelegram);
+    const telegramBtn = eTelegram
+      ? `<a href="https://t.me/${eTelegram}" class="btn btn-outline" target="_blank" rel="noopener">✈️ Telegram</a>`
+      : `<span class="btn btn-outline" aria-disabled="true" title="Telegram not available for this listing" style="opacity:0.4;cursor:not-allowed;pointer-events:none">✈️ Telegram</span>`;
+
+    const mainPhotoHtml = photos.length
+      ? `<img id="mainPhoto" src="${escapeHtml(photoUrl(photos[0], 'detail'))}" alt="${eBrand} ${eModel}" />`
+      : typeEmoji;
+
+    const thumbsHtml = photos.length > 1
+      ? `<div class="gallery-thumbs">${photos.map((p, i) =>
+          `<img src="${escapeHtml(photoUrl(p, 'thumb'))}" data-full="${escapeHtml(photoUrl(p, 'detail'))}" class="${i === 0 ? 'active' : ''}" alt="${eBrand} ${eModel} photo ${i + 1}" />`
+        ).join('')}</div>`
+      : '';
+
+    root.className = '';
+    root.innerHTML = `
+      <div class="detail-grid">
+        <div>
+          <div class="gallery-main">${mainPhotoHtml}</div>
+          ${thumbsHtml}
+        </div>
+        <div>
+          <div class="detail-badge-row">
+            ${isFeaturedActive ? '<span class="featured-badge" style="position:static">⭐ Featured</span>' : ''}
+            <span class="listing-condition" style="position:static">${escapeHtml(listing.condition === 'new' ? 'Brand New' : listing.condition === 'seized' ? 'Bank Seized' : 'Locally Used')}</span>
+          </div>
+          <h1 class="detail-title">${eBrand} ${eModel} ${eYear}</h1>
+          <div class="detail-price">${Number(listing.price).toLocaleString('en-ET')} ETB</div>
+          <div class="detail-meta">
+            <span>📍 ${eLocation}</span>
+            ${listing.mileage ? `<span>🛣️ ${escapeHtml(Number(listing.mileage).toLocaleString('en-ET'))} km</span>` : ''}
+            ${listing.transmission ? `<span>⚙️ ${escapeHtml(listing.transmission)}</span>` : ''}
+            ${listing.fuel ? `<span>⛽ ${escapeHtml(listing.fuel)}</span>` : ''}
+            <span>👁 ${escapeHtml(String(listing.views || 0))} views</span>
+          </div>
+          <p class="detail-desc">${eDesc}</p>
+          <div class="detail-seller">
+            <div class="seller-avatar">${eSeller.charAt(0).toUpperCase()}</div>
+            <span>${eSeller}</span>
+            ${isVerified ? '<span class="verified-badge">✓ Verified</span>' : ''}
+          </div>
+          <div class="detail-actions">
+            <a href="${safeTel}" class="btn btn-primary">📞 Call Seller</a>
+            ${telegramBtn}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.querySelectorAll('.gallery-thumbs img').forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        document.getElementById('mainPhoto').src = thumb.dataset.full;
+        document.querySelectorAll('.gallery-thumbs img').forEach(t => t.classList.remove('active'));
+        thumb.classList.add('active');
+      });
+    });
+
+    // Count this as a view — once per page load, not per refresh-spam,
+    // good enough for an honest signal without extra dedupe logic.
+    incrementViews(listing.id).catch(e => console.warn('Could not record view:', e));
+  }
+
+  init();
+</script>
+
+</body>
+</html>

@@ -2,8 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline' fonts.googleapis.com; font-src 'self' fonts.gstatic.com; img-src 'self' data: https://xrmbzycasbzdaolvtuop.supabase.co blob:; connect-src 'self' https://xrmbzycasbzdaolvtuop.supabase.co https://bridge-proxy-9kwv.vercel.app https://api.groq.com; frame-ancestors 'none';">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>All Listings — Bridge Broker</title>
+  <meta name="description" content="Browse cars, motorcycles, and Bajajs for sale across Ethiopia. Filter by brand, price, and location on Bridge Broker, Ethiopia's trusted vehicle marketplace." />
+  <link rel="canonical" href="https://www.bridge-broker.com/listings.html" />
+  <meta name="robots" content="index, follow" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Bridge Broker" />
+  <meta property="og:title" content="All Vehicle Listings — Bridge Broker" />
+  <meta property="og:description" content="Browse cars, motorcycles, and Bajajs for sale across Ethiopia." />
+  <meta property="og:url" content="https://www.bridge-broker.com/listings.html" />
+  <meta property="og:image" content="https://www.bridge-broker.com/og-image.jpg" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="All Vehicle Listings — Bridge Broker" />
+  <meta name="twitter:description" content="Browse cars, motorcycles, and Bajajs for sale across Ethiopia." />
+  <meta name="twitter:image" content="https://www.bridge-broker.com/og-image.jpg" />
+
   <link rel="stylesheet" href="css/style.css" />
   <style>
     .listings-page { padding-top: 68px; min-height: 100vh; }
@@ -18,33 +35,100 @@
     .listings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
     .listings-count { font-size: 14px; color: var(--gray-400); }
     .sort-select { background: var(--charcoal-mid); border: 1px solid rgba(255,255,255,0.1); color: var(--white); padding: 8px 12px; border-radius: var(--radius-sm); font-size: 13px; font-family: inherit; outline: none; }
+
+    /* Mobile "Filters" trigger button — hidden on desktop, where the
+       sidebar is already visible at all times. */
+    .mobile-filter-trigger { display: none; }
+
+    /* Backdrop behind the slide-in drawer on mobile */
+    .filter-backdrop { display: none; }
+
     @media (max-width: 768px) {
       .listings-page-layout { grid-template-columns: 1fr; }
-      .filter-sidebar { display: none; }
+
+      .mobile-filter-trigger {
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        width: 100%; margin-bottom: 16px;
+      }
+
+      /* Instead of hiding the sidebar, turn it into a slide-in drawer
+         that sits above the page content and is toggled by the
+         Filters button + an Apply/Close footer added via JS. */
+      .filter-sidebar {
+        position: fixed;
+        top: 0; right: 0; bottom: 0;
+        width: min(86vw, 360px);
+        max-width: 360px;
+        height: 100vh;
+        margin: 0;
+        background: var(--charcoal);
+        z-index: 2001;
+        padding: 20px 16px 90px;
+        overflow-y: auto;
+        transform: translateX(100%);
+        transition: transform 0.25s ease;
+        box-shadow: -8px 0 24px rgba(0,0,0,0.4);
+      }
+      .filter-sidebar.open { transform: translateX(0); }
+
+      .filter-backdrop {
+        display: block;
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.6);
+        z-index: 2000;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+      }
+      .filter-backdrop.open { opacity: 1; pointer-events: auto; }
+
+      .filter-drawer-header {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 16px; padding-bottom: 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+      }
+      .filter-drawer-close {
+        background: none; border: none; color: var(--gray-400);
+        font-size: 22px; cursor: pointer; line-height: 1; padding: 4px;
+      }
+      .filter-drawer-footer {
+        position: fixed; left: 0; right: 0; bottom: 0;
+        width: min(86vw, 360px); margin-left: auto;
+        background: var(--charcoal); padding: 14px 16px;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        transform: translateX(100%);
+        transition: transform 0.25s ease;
+        z-index: 2002;
+      }
+      .filter-drawer-footer.open { transform: translateX(0); }
     }
   </style>
 </head>
 <body>
 
-<nav class="navbar">
+<nav class="navbar" role="navigation" aria-label="Main navigation">
   <div class="container">
-    <a href="index.html" class="nav-logo">
-      <div class="nav-logo-icon">🌉</div>
+    <a href="index.html" class="nav-logo" aria-label="Bridge Broker Home">
+      <div class="nav-logo-icon" aria-hidden="true">🌉</div>
       <span class="nav-logo-text">Bridge <span>Broker</span></span>
     </a>
-    <ul class="nav-links">
+    <ul class="nav-links" role="list">
       <li><a href="index.html" data-i18n="nav_home">Home</a></li>
       <li><a href="listings.html" class="active" data-i18n="nav_listings">Listings</a></li>
-      <li><a href="index.html#how-it-works" data-i18n="nav_about">About</a></li>
+      <li><a href="about.html" data-i18n="nav_about">About</a></li>
+      <li><a href="contact.html" data-i18n="nav_contact">Contact</a></li>
     </ul>
     <div class="nav-actions">
-      <div class="lang-toggle">
-        <button class="lang-btn active" data-lang="en">EN</button>
-        <button class="lang-btn" data-lang="am">አማ</button>
+      <div class="lang-toggle" role="group" aria-label="Language selector">
+        <button class="lang-btn active" data-lang="en" aria-label="Switch to English">EN</button>
+        <button class="lang-btn" data-lang="am" aria-label="ወደ አማርኛ ቀይር">አማ</button>
       </div>
       <button class="btn btn-outline btn-sm" data-modal="loginModal" data-i18n="nav_login">Login</button>
       <button class="btn btn-primary btn-sm" data-modal="listingModal" data-i18n="nav_post">Post Listing</button>
     </div>
+    <button class="nav-hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
 
@@ -60,8 +144,8 @@
       <!-- Quick search bar -->
       <div class="search-box" style="margin-bottom: 0; border-radius: var(--radius-sm) var(--radius-sm) 0 0;">
         <div class="search-field">
-          <label for="pageType">Type</label>
-          <select id="pageType">
+          <label for="filterType">Type</label>
+          <select id="filterType">
             <option value="">All</option>
             <option value="car">🚗 Car</option>
             <option value="motorcycle">🏍️ Motorcycle</option>
@@ -69,16 +153,16 @@
           </select>
         </div>
         <div class="search-field">
-          <label for="pageBrand">Brand / Model</label>
-          <input type="text" id="pageBrand" placeholder="Toyota, Haojue..." />
+          <label for="filterBrand">Brand / Model</label>
+          <input type="text" id="filterBrand" placeholder="Toyota, Haojue..." />
         </div>
         <div class="search-field">
-          <label for="pagePrice">Max Price (ETB)</label>
-          <input type="number" id="pagePrice" placeholder="500000" />
+          <label for="filterPrice">Max Price (ETB)</label>
+          <input type="number" id="filterPrice" placeholder="500000" />
         </div>
         <div class="search-field">
-          <label for="pageLocation">City</label>
-          <select id="pageLocation">
+          <label for="filterLocation">City</label>
+          <select id="filterLocation">
             <option value="">All Cities</option>
             <option>Addis Ababa</option>
             <option>Adama</option>
@@ -96,18 +180,30 @@
 
     <div class="listings-page-layout">
 
-      <!-- FILTER SIDEBAR -->
-      <aside class="filter-sidebar">
+      <!-- Mobile-only: opens the filter sidebar as a drawer -->
+      <button class="btn btn-outline mobile-filter-trigger" id="mobileFilterBtn" aria-haspopup="true" aria-expanded="false">
+        🔍 Filters <span id="activeFilterCount" style="display:none;background:var(--teal);color:#04201c;font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;margin-left:2px"></span>
+      </button>
+
+      <!-- Backdrop shown behind the drawer on mobile -->
+      <div class="filter-backdrop" id="filterBackdrop"></div>
+
+      <!-- FILTER SIDEBAR (drawer on mobile, static column on desktop) -->
+      <aside class="filter-sidebar" id="filterSidebar">
+        <div class="filter-drawer-header">
+          <strong style="font-size:16px">Filters</strong>
+          <button class="filter-drawer-close" id="filterDrawerClose" aria-label="Close filters">✕</button>
+        </div>
         <div class="filter-card">
           <div class="filter-title">Vehicle Type</div>
-          <label class="filter-option"><input type="checkbox" checked> All</label>
+          <label class="filter-option"><input type="checkbox" checked data-filter-all="true"> All</label>
           <label class="filter-option"><input type="checkbox"> 🚗 Cars</label>
           <label class="filter-option"><input type="checkbox"> 🏍️ Motorcycles</label>
           <label class="filter-option"><input type="checkbox"> 🛺 Bajajs</label>
         </div>
         <div class="filter-card">
           <div class="filter-title">Condition</div>
-          <label class="filter-option"><input type="checkbox" checked> All</label>
+          <label class="filter-option"><input type="checkbox" checked data-filter-all="true"> All</label>
           <label class="filter-option"><input type="checkbox"> Brand New</label>
           <label class="filter-option"><input type="checkbox"> Locally Used</label>
           <label class="filter-option"><input type="checkbox"> Bank Seized</label>
@@ -122,7 +218,7 @@
         </div>
         <div class="filter-card">
           <div class="filter-title">Location</div>
-          <label class="filter-option"><input type="checkbox" checked> All Ethiopia</label>
+          <label class="filter-option"><input type="checkbox" checked data-filter-all="true"> All Ethiopia</label>
           <label class="filter-option"><input type="checkbox"> Addis Ababa</label>
           <label class="filter-option"><input type="checkbox"> Adama</label>
           <label class="filter-option"><input type="checkbox"> Hawassa</label>
@@ -131,11 +227,16 @@
         </div>
         <div class="filter-card">
           <div class="filter-title">Seller Type</div>
-          <label class="filter-option"><input type="checkbox" checked> All Sellers</label>
+          <label class="filter-option"><input type="checkbox" checked data-filter-all="true"> All Sellers</label>
           <label class="filter-option"><input type="checkbox"> ✓ Verified Brokers Only</label>
           <label class="filter-option"><input type="checkbox"> Private Sellers</label>
         </div>
       </aside>
+
+      <!-- Mobile-only sticky footer for the drawer -->
+      <div class="filter-drawer-footer" id="filterDrawerFooter">
+        <button class="btn btn-primary" id="applyFiltersBtn" style="width:100%;justify-content:center;padding:12px">Apply Filters</button>
+      </div>
 
       <!-- LISTINGS RESULTS -->
       <div>
@@ -171,10 +272,10 @@
                 <div class="listing-contact">
                   <button class="contact-btn wishlist-btn">🤍</button>
                   <a href="tel:+251900000001" class="contact-btn">📞</a>
-                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank" rel="noopener">✈️</a>
                 </div>
               </div>
-              <div class="listing-seller"><div class="seller-avatar">A</div>Abebe Kebede &nbsp;<span class="verified-badge">✓ Verified</span></div>
+              <div class="listing-seller"><div class="seller-avatar">A</div>Abebe Kebede</div>
             </div>
           </article>
 
@@ -189,10 +290,10 @@
                 <div class="listing-contact">
                   <button class="contact-btn wishlist-btn">🤍</button>
                   <a href="tel:+251900000002" class="contact-btn">📞</a>
-                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank" rel="noopener">✈️</a>
                 </div>
               </div>
-              <div class="listing-seller"><div class="seller-avatar">R</div>Rode Star Motors &nbsp;<span class="verified-badge">✓ Verified</span></div>
+              <div class="listing-seller"><div class="seller-avatar">R</div>Rode Star Motors</div>
             </div>
           </article>
 
@@ -207,7 +308,7 @@
                 <div class="listing-contact">
                   <button class="contact-btn wishlist-btn">🤍</button>
                   <a href="tel:+251900000003" class="contact-btn">📞</a>
-                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank" rel="noopener">✈️</a>
                 </div>
               </div>
               <div class="listing-seller"><div class="seller-avatar">T</div>Tigist Alemu</div>
@@ -225,10 +326,10 @@
                 <div class="listing-contact">
                   <button class="contact-btn wishlist-btn">🤍</button>
                   <a href="tel:+251900000004" class="contact-btn">📞</a>
-                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank" rel="noopener">✈️</a>
                 </div>
               </div>
-              <div class="listing-seller"><div class="seller-avatar">M</div>Mohammed Ali &nbsp;<span class="verified-badge">✓ Verified</span></div>
+              <div class="listing-seller"><div class="seller-avatar">M</div>Mohammed Ali</div>
             </div>
           </article>
 
@@ -243,10 +344,10 @@
                 <div class="listing-contact">
                   <button class="contact-btn wishlist-btn">🤍</button>
                   <a href="tel:+251900000005" class="contact-btn">📞</a>
-                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank" rel="noopener">✈️</a>
                 </div>
               </div>
-              <div class="listing-seller"><div class="seller-avatar">R</div>Rode Star Motors &nbsp;<span class="verified-badge">✓ Verified</span></div>
+              <div class="listing-seller"><div class="seller-avatar">R</div>Rode Star Motors</div>
             </div>
           </article>
 
@@ -261,7 +362,7 @@
                 <div class="listing-contact">
                   <button class="contact-btn wishlist-btn">🤍</button>
                   <a href="tel:+251900000006" class="contact-btn">📞</a>
-                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank">✈️</a>
+                  <a href="https://t.me/bridgebroker" class="contact-btn tg" target="_blank" rel="noopener">✈️</a>
                 </div>
               </div>
               <div class="listing-seller"><div class="seller-avatar">D</div>Dawit Tadesse</div>
@@ -329,6 +430,80 @@ function updatePrice(val) {
   const formatted = parseInt(val).toLocaleString();
   document.getElementById('priceDisplay').textContent = val >= 3000000 ? '3,000,000+' : formatted + ' ETB';
 }
+
+// ══════════════════════════════════════════════════════
+//  MOBILE FILTER DRAWER
+//  Below 768px the sidebar becomes a slide-in drawer instead
+//  of disappearing — opened by the "Filters" button, closed by
+//  the ✕, the backdrop, Escape, or "Apply Filters".
+// ══════════════════════════════════════════════════════
+(function () {
+  const sidebar   = document.getElementById('filterSidebar');
+  const backdrop  = document.getElementById('filterBackdrop');
+  const footer    = document.getElementById('filterDrawerFooter');
+  const openBtn   = document.getElementById('mobileFilterBtn');
+  const closeBtn  = document.getElementById('filterDrawerClose');
+  const applyBtn  = document.getElementById('applyFiltersBtn');
+  const countEl   = document.getElementById('activeFilterCount');
+
+  function isMobile() {
+    return window.matchMedia('(max-width: 768px)').matches;
+  }
+
+  function openDrawer() {
+    if (!isMobile()) return;
+    sidebar.classList.add('open');
+    backdrop.classList.add('open');
+    footer.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    openBtn.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeDrawer() {
+    sidebar.classList.remove('open');
+    backdrop.classList.remove('open');
+    footer.classList.remove('open');
+    document.body.style.overflow = '';
+    openBtn.setAttribute('aria-expanded', 'false');
+    updateActiveFilterCount();
+  }
+
+  openBtn?.addEventListener('click', openDrawer);
+  closeBtn?.addEventListener('click', closeDrawer);
+  backdrop?.addEventListener('click', closeDrawer);
+  applyBtn?.addEventListener('click', () => {
+    document.getElementById('searchBtn')?.click();
+    closeDrawer();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidebar.classList.contains('open')) closeDrawer();
+  });
+
+  // If the viewport is resized from mobile to desktop while the
+  // drawer is open, reset everything so it doesn't get stuck.
+  window.addEventListener('resize', () => {
+    if (!isMobile()) closeDrawer();
+  });
+
+  // Show how many non-default filters are active on the Filters
+  // button itself, so mobile users know at a glance whether
+  // anything is currently narrowing their results.
+  function updateActiveFilterCount() {
+    if (!countEl) return;
+    const checked = sidebar.querySelectorAll('.filter-card input[type=checkbox]:checked:not([data-filter-all])');
+    const priceMoved = document.getElementById('priceRange')?.value < 3000000;
+    const count = checked.length + (priceMoved ? 1 : 0);
+    if (count > 0) {
+      countEl.textContent = count;
+      countEl.style.display = 'inline-block';
+    } else {
+      countEl.style.display = 'none';
+    }
+  }
+  sidebar?.addEventListener('change', updateActiveFilterCount);
+  updateActiveFilterCount();
+})();
 </script>
 </body>
 </html>
