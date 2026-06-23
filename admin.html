@@ -346,7 +346,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
 const SUPABASE_URL = 'https://xrmbzycasbzdaolvtuop.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhybWJ6eWNhc2J6ZGFvbHZ0dW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MDQ1MzksImV4cCI6MjA5NzM4MDUzOX0.B6Jqf5Pv0C4AkAu-BaYy0TeS6xXajRGvm31pKGVYYn0';
+const SUPABASE_KEY = 'sb_publishable_EIjYMLjXtbdfL-J1gs-B4g_DPjL0qzh';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Broker's own number — change this to your real number
@@ -1166,7 +1166,7 @@ window.loadAllListings = async function() {
   const { data, error } = await supabase
     .from('listings')
     .select('*')
-    .in('status', ['approved', 'sold'])
+    .in('status', ['approved', 'sold', 'unpublished', 'rejected'])
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -1174,7 +1174,7 @@ window.loadAllListings = async function() {
     return;
   }
   if (!data?.length) {
-    list.innerHTML = '<p style="color:var(--gray-400);padding:20px 0">No approved listings yet.</p>';
+    list.innerHTML = '<p style="color:var(--gray-400);padding:20px 0">No listings yet.</p>';
     return;
   }
 
@@ -1186,8 +1186,20 @@ window.loadAllListings = async function() {
     const eModel      = escapeHtml(l.model);
     const eYear       = escapeHtml(String(l.year));
     const eSellerName = escapeHtml(l.seller_name);
-    const isSold      = l.status === 'sold';
+    const isSold        = l.status === 'sold';
+    const isApproved    = l.status === 'approved';
+    const isUnpublished = l.status === 'unpublished';
+    const isRejected    = l.status === 'rejected';
     const commissionPct = l.commission_percent != null ? `${Number(l.commission_percent)}%` : '—';
+
+    // Status badge
+    const statusBadge = isSold
+      ? '<span style="font-size:11px;background:var(--teal);color:var(--charcoal);padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:700">SOLD</span>'
+      : isUnpublished
+        ? '<span style="font-size:11px;background:var(--gold);color:var(--charcoal);padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:700">UNPUBLISHED</span>'
+        : isRejected
+          ? '<span style="font-size:11px;background:var(--danger);color:var(--white);padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:700">REJECTED</span>'
+          : '';
 
     const soldBlock = isSold ? `
       <div style="font-size:13px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08)">
@@ -1205,7 +1217,7 @@ window.loadAllListings = async function() {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
         <div style="flex:1">
           <div style="font-size:16px;font-weight:700;margin-bottom:4px">${eBrand} ${eModel} ${eYear}
-            ${isSold ? '<span style="font-size:11px;background:var(--teal);color:var(--charcoal);padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:700">SOLD</span>' : ''}
+            ${statusBadge}
           </div>
           <div style="font-size:13px;color:var(--gray-400)">
             👤 ${eSellerName} &nbsp;|&nbsp; Asking: <span style="color:var(--teal)">${Number(l.price).toLocaleString()} ETB</span>
@@ -1215,15 +1227,20 @@ window.loadAllListings = async function() {
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-        ${!isSold ? `
+        ${isApproved ? `
           <button class="btn btn-primary btn-sm" onclick="openMarkSoldModal('${eId}')">💰 Mark as Sold</button>
           <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="unpublishListing('${eId}')">🚫 Unpublish</button>
         ` : ''}
-        ${isSold && l.commission_status === 'owed' ? `
-          <button class="btn btn-sm btn-outline" onclick="markCommissionCollected('${eId}')">✅ Mark Commission Collected</button>
+        ${isSold ? `
+          <button class="btn btn-sm btn-outline" style="background:rgba(0,201,167,0.15);border-color:var(--teal);color:var(--teal)" onclick="relistListing('${eId}', 'sold')">🔄 Re-list</button>
+          ${l.commission_status === 'owed' ? `<button class="btn btn-sm btn-outline" onclick="markCommissionCollected('${eId}')">✅ Mark Commission Collected</button>` : ''}
+          ${l.photos?.length ? `<button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="deleteListingPhotos('${eId}')">🗑️ Delete Photos</button>` : ''}
         ` : ''}
-        ${isSold && l.photos?.length ? `
-          <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="deleteListingPhotos('${eId}')">🗑️ Delete Photos</button>
+        ${isUnpublished ? `
+          <button class="btn btn-sm btn-outline" style="background:rgba(0,201,167,0.15);border-color:var(--teal);color:var(--teal)" onclick="relistListing('${eId}', 'unpublished')">🔄 Re-list (Go Live)</button>
+        ` : ''}
+        ${isRejected ? `
+          <button class="btn btn-sm btn-outline" style="background:rgba(255,200,0,0.15);border-color:var(--gold);color:var(--gold)" onclick="relistListing('${eId}', 'rejected')">🔄 Re-list (To Pending)</button>
         ` : ''}
       </div>
     </div>
@@ -1251,7 +1268,7 @@ window.unpublishListing = async function(listingId) {
 
   const { error } = await supabase
     .from('listings')
-    .update({ status: 'rejected' })
+    .update({ status: 'unpublished' })
     .eq('id', listingId);
 
   if (error) {
@@ -1262,6 +1279,55 @@ window.unpublishListing = async function(listingId) {
   showToast('🚫 Listing unpublished — no longer visible on the site.');
   loadAllListings();
   loadStats();
+}
+
+// ── Re-list a sold, unpublished, or rejected listing ──
+window.relistListing = async function(listingId, fromStatus) {
+  const listing = allListingsById.get(listingId);
+  if (!listing) { showToast('❌ Could not find that listing — try refreshing.'); return; }
+
+  let newStatus, confirmMsg, successMsg;
+
+  if (fromStatus === 'sold') {
+    newStatus = 'approved';
+    confirmMsg = `Re-list "${listing.brand} ${listing.model} ${listing.year}" as Sold?\n\nThis will move it back to Approved and clear all sale/commission data. It will be live on the site immediately.`;
+    successMsg = '✅ Listing re-listed — now live again.';
+  } else if (fromStatus === 'unpublished') {
+    newStatus = 'approved';
+    confirmMsg = `Re-list "${listing.brand} ${listing.model} ${listing.year}"?\n\nThis will make it live on the site immediately.`;
+    successMsg = '✅ Listing is now live again.';
+  } else {
+    // rejected — send back to pending for re-review
+    newStatus = 'pending';
+    confirmMsg = `Re-list "${listing.brand} ${listing.model} ${listing.year}"?\n\nThis will send it back to Pending — you'll need to review and approve it before it goes live.`;
+    successMsg = '✅ Listing moved to Pending — review it in the Pending section.';
+  }
+
+  if (!confirm(confirmMsg)) return;
+
+  const updateData = { status: newStatus };
+
+  // Clear sale data if coming from sold
+  if (fromStatus === 'sold') {
+    updateData.sold_at = null;
+    updateData.sold_by = null;
+    updateData.sale_price = null;
+    updateData.commission_owed = null;
+    updateData.commission_status = 'not_applicable';
+    updateData.commission_note = null;
+  }
+
+  const { error } = await supabase
+    .from('listings')
+    .update(updateData)
+    .eq('id', listingId);
+
+  if (error) { showToast(`❌ ${error.message}`); return; }
+
+  showToast(successMsg);
+  loadAllListings();
+  loadStats();
+  if (newStatus === 'pending') loadPending();
 }
 
 window.openMarkSoldModal = function(listingId) {
