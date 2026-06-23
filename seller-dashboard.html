@@ -71,6 +71,8 @@
       <div style="font-size:32px">🔒</div>
       <p style="color:var(--gray-400)" id="authgateMsg">Checking your session…</p>
       <button id="authgateRetry" onclick="location.reload()" style="display:none;padding:10px 24px;background:var(--teal,#0d9488);color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer">↺ Retry</button>
+      <a id="authgateLoginBtn" href="index.html?login=required" style="display:none;padding:10px 24px;background:var(--teal,#0d9488);color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;text-decoration:none;text-align:center">🔑 Login / Sign Up</a>
+      <p id="authgateLoginMsg" style="display:none;color:var(--gray-400);font-size:13px;text-align:center">You need to be logged in to access the Seller Dashboard.</p>
     </div>
 
     <!-- OVERVIEW SECTION -->
@@ -502,32 +504,39 @@ import {
 // ════════════════════════════════════════════════════════
 // Show a "slow connection" message after 5 s, and a retry button after 12 s,
 // so mobile users on weak signal are never stuck on a frozen spinner.
-const _authTimeout5 = setTimeout(() => {
+const _authTimeout3 = setTimeout(() => {
   const msg = document.getElementById('authgateMsg');
   if (msg) msg.textContent = 'Slow connection… still checking…';
-}, 5000);
-const _authTimeout12 = setTimeout(() => {
-  const msg = document.getElementById('authgateMsg');
-  const btn = document.getElementById('authgateRetry');
-  if (msg) msg.textContent = 'Connection timed out.';
-  if (btn) btn.style.display = '';
-}, 12000);
+}, 3000);
+const _authTimeout8 = setTimeout(() => {
+  const msg  = document.getElementById('authgateMsg');
+  const btn  = document.getElementById('authgateRetry');
+  const lBtn = document.getElementById('authgateLoginBtn');
+  const lMsg = document.getElementById('authgateLoginMsg');
+  if (msg)  msg.textContent = 'Connection timed out.';
+  if (btn)  btn.style.display = '';
+  if (lBtn) lBtn.style.display = '';
+  if (lMsg) lMsg.style.display = '';
+}, 8000);
 
 let user;
 try {
   user = await Promise.race([
     getCurrentUser(),
-    new Promise((_, reject) => setTimeout(() => reject(new Error('auth_timeout')), 15000))
+    new Promise((_, reject) => setTimeout(() => reject(new Error('auth_timeout')), 10000))
   ]);
 } catch (err) {
-  clearTimeout(_authTimeout5);
-  clearTimeout(_authTimeout12);
+  clearTimeout(_authTimeout3);
+  clearTimeout(_authTimeout8);
   if (err.message === 'auth_timeout') {
-    // Already showing retry button — just update the message
-    const msg = document.getElementById('authgateMsg');
-    const btn = document.getElementById('authgateRetry');
-    if (msg) msg.textContent = 'Could not reach server. Check your connection.';
-    if (btn) btn.style.display = '';
+    const msg  = document.getElementById('authgateMsg');
+    const btn  = document.getElementById('authgateRetry');
+    const lBtn = document.getElementById('authgateLoginBtn');
+    const lMsg = document.getElementById('authgateLoginMsg');
+    if (msg)  msg.textContent = 'Could not reach server. Check your connection.';
+    if (btn)  btn.style.display = '';
+    if (lBtn) lBtn.style.display = '';
+    if (lMsg) lMsg.style.display = '';
     throw new Error('Auth timed out.');
   }
   throw err;
