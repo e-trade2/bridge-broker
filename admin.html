@@ -134,6 +134,15 @@
         <h2 class="table-card-title">📋 All Listings</h2>
         <button class="btn btn-sm btn-outline" onclick="loadAllListings()">🔄 Refresh</button>
       </div>
+      <div style="padding:0 16px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:12px;color:var(--gray-400);margin-right:4px">Filter:</span>
+        <button class="btn btn-sm all-filter-tab" data-filter="all"       onclick="setAllListingsFilter('all')"         style="background:var(--teal);color:var(--charcoal)">All</button>
+        <button class="btn btn-sm all-filter-tab" data-filter="approved"  onclick="setAllListingsFilter('approved')"    style="opacity:0.55">✅ Approved</button>
+        <button class="btn btn-sm all-filter-tab" data-filter="sold"      onclick="setAllListingsFilter('sold')"        style="opacity:0.55">💰 Sold</button>
+        <button class="btn btn-sm all-filter-tab" data-filter="rejected"  onclick="setAllListingsFilter('rejected')"   style="opacity:0.55">✕ Rejected</button>
+        <button class="btn btn-sm all-filter-tab" data-filter="unpublished" onclick="setAllListingsFilter('unpublished')" style="opacity:0.55">🚫 Unpublished</button>
+        <button id="bulkRemoveBtn" style="display:none;margin-left:auto" class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="bulkRemoveFiltered()">🗑️ Remove All Filtered</button>
+      </div>
       <div style="padding:16px;font-size:12px;color:var(--gray-400);margin-bottom:4px">
         Most sales happen off-platform — buyer and seller meet directly. When a listing sells,
         click <strong>Mark as Sold</strong> to record the final price; commission owed is
@@ -1158,29 +1167,42 @@ window.submitEscrowCreate = async function() {
 // ── All Listings (approved + sold) — Mark as Sold flow ──
 let allListingsById = new Map();
 let pendingToMarkSold = null;
+let _allListingsFilter = 'all'; // current active filter tab
 
-window.loadAllListings = async function() {
+window.setAllListingsFilter = function(filter) {
+  _allListingsFilter = filter;
+  // Update tab styles
+  document.querySelectorAll('.all-filter-tab').forEach(btn => {
+    const active = btn.dataset.filter === filter;
+    btn.style.background = active ? 'var(--teal)' : '';
+    btn.style.color      = active ? 'var(--charcoal)' : '';
+    btn.style.opacity    = active ? '1' : '0.55';
+  });
+  // Show bulk remove button only when a specific status is filtered
+  const bulkBtn = document.getElementById('bulkRemoveBtn');
+  if (bulkBtn) {
+    const showBulk = filter !== 'all' && filter !== 'approved';
+    bulkBtn.style.display = showBulk ? '' : 'none';
+    bulkBtn.textContent   = `🗑️ Remove All ${filter.charAt(0).toUpperCase() + filter.slice(1)}`;
+    bulkBtn.style.background    = 'var(--danger)';
+    bulkBtn.style.color         = 'var(--white)';
+  }
+  renderAllListings();
+};
+
+function renderAllListings() {
   const list = document.getElementById('allListingsList');
-  list.innerHTML = '<p style="color:var(--gray-400)">Loading…</p>';
+  const allData = [...allListingsById.values()];
+  const filtered = _allListingsFilter === 'all'
+    ? allData
+    : allData.filter(l => l.status === _allListingsFilter);
 
-  const { data, error } = await supabase
-    .from('listings')
-    .select('*')
-    .in('status', ['approved', 'sold', 'unpublished', 'rejected'])
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    list.innerHTML = `<p style="color:var(--danger)">Error: ${escapeHtml(error.message)}</p>`;
-    return;
-  }
-  if (!data?.length) {
-    list.innerHTML = '<p style="color:var(--gray-400);padding:20px 0">No listings yet.</p>';
+  if (!filtered.length) {
+    list.innerHTML = `<p style="color:var(--gray-400);padding:20px 0">No ${_allListingsFilter === 'all' ? '' : _allListingsFilter + ' '}listings.</p>`;
     return;
   }
 
-  allListingsById = new Map(data.map(l => [l.id, l]));
-
-  list.innerHTML = data.map(l => {
+  list.innerHTML = filtered.map(l => {
     const eId         = escapeHtml(l.id);
     const eBrand      = escapeHtml(l.brand);
     const eModel      = escapeHtml(l.model);
@@ -1192,7 +1214,6 @@ window.loadAllListings = async function() {
     const isRejected    = l.status === 'rejected';
     const commissionPct = l.commission_percent != null ? `${Number(l.commission_percent)}%` : '—';
 
-    // Status badge
     const statusBadge = isSold
       ? '<span style="font-size:11px;background:var(--teal);color:var(--charcoal);padding:2px 8px;border-radius:4px;margin-left:8px;font-weight:700">SOLD</span>'
       : isUnpublished
@@ -1233,20 +1254,81 @@ window.loadAllListings = async function() {
         ` : ''}
         ${isSold ? `
           <button class="btn btn-sm btn-outline" style="background:rgba(0,201,167,0.15);border-color:var(--teal);color:var(--teal)" onclick="relistListing('${eId}', 'sold')">🔄 Re-list</button>
+          <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="removeListing('${eId}')">🗑️ Remove</button>
           ${l.commission_status === 'owed' ? `<button class="btn btn-sm btn-outline" onclick="markCommissionCollected('${eId}')">✅ Mark Commission Collected</button>` : ''}
           ${l.photos?.length ? `<button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="deleteListingPhotos('${eId}')">🗑️ Delete Photos</button>` : ''}
         ` : ''}
         ${isUnpublished ? `
           <button class="btn btn-sm btn-outline" style="background:rgba(0,201,167,0.15);border-color:var(--teal);color:var(--teal)" onclick="relistListing('${eId}', 'unpublished')">🔄 Re-list (Go Live)</button>
+          <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="removeListing('${eId}')">🗑️ Remove</button>
         ` : ''}
         ${isRejected ? `
           <button class="btn btn-sm btn-outline" style="background:rgba(255,200,0,0.15);border-color:var(--gold);color:var(--gold)" onclick="relistListing('${eId}', 'rejected')">🔄 Re-list (To Pending)</button>
+          <button class="btn btn-sm" style="background:var(--danger);color:var(--white)" onclick="removeListing('${eId}')">🗑️ Remove</button>
         ` : ''}
       </div>
     </div>
   `;
   }).join('');
 }
+
+window.loadAllListings = async function() {
+  const list = document.getElementById('allListingsList');
+  list.innerHTML = '<p style="color:var(--gray-400)">Loading…</p>';
+
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .in('status', ['approved', 'sold', 'unpublished', 'rejected'])
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    list.innerHTML = `<p style="color:var(--danger)">Error: ${escapeHtml(error.message)}</p>`;
+    return;
+  }
+  if (!data?.length) {
+    list.innerHTML = '<p style="color:var(--gray-400);padding:20px 0">No listings yet.</p>';
+    return;
+  }
+
+  allListingsById = new Map(data.map(l => [l.id, l]));
+  renderAllListings();
+};
+
+// ── Bulk remove all listings matching the current filter ──
+window.bulkRemoveFiltered = async function() {
+  const filter = _allListingsFilter;
+  if (filter === 'all' || filter === 'approved') return; // safety guard
+
+  const targets = [...allListingsById.values()].filter(l => l.status === filter);
+  if (!targets.length) { showToast('Nothing to remove.'); return; }
+
+  const label = filter.charAt(0).toUpperCase() + filter.slice(1);
+  const confirmed = confirm(
+    `⚠️ Permanently delete ALL ${targets.length} ${label} listing(s)?\n\nThis cannot be undone.`
+  );
+  if (!confirmed) return;
+
+  // Delete in batches of 10 to avoid URL-length limits
+  const ids = targets.map(l => l.id);
+  let failed = 0;
+  for (let i = 0; i < ids.length; i += 10) {
+    const batch = ids.slice(i, i + 10);
+    const { error } = await supabase
+      .from('listings')
+      .delete()
+      .in('id', batch);
+    if (error) { failed += batch.length; console.error(error); }
+  }
+
+  if (failed) {
+    showToast(`⚠️ Removed ${ids.length - failed} listings. ${failed} failed — check console.`);
+  } else {
+    showToast(`🗑️ ${ids.length} ${label} listing(s) permanently removed.`);
+  }
+  loadAllListings();
+  loadStats();
+};
 
 // Pulls a live (approved) listing off the public site without marking it
 // sold or touching its commission/sale data. Sets status back to
@@ -1328,6 +1410,26 @@ window.relistListing = async function(listingId, fromStatus) {
   loadAllListings();
   loadStats();
   if (newStatus === 'pending') loadPending();
+}
+
+// ── Permanently remove a listing ──
+window.removeListing = async function(listingId) {
+  const listing = allListingsById.get(listingId);
+  if (!listing) { showToast('❌ Could not find that listing — try refreshing.'); return; }
+
+  const confirmMsg = `⚠️ Permanently remove "${listing.brand} ${listing.model} ${listing.year}"?\n\nThis will delete the listing from the database. This cannot be undone.`;
+  if (!confirm(confirmMsg)) return;
+
+  const { error } = await supabase
+    .from('listings')
+    .delete()
+    .eq('id', listingId);
+
+  if (error) { showToast(`❌ ${error.message}`); return; }
+
+  showToast('🗑️ Listing permanently removed.');
+  loadAllListings();
+  loadStats();
 }
 
 window.openMarkSoldModal = function(listingId) {
