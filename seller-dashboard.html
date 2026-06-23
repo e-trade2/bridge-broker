@@ -63,6 +63,25 @@
     </div>
   </aside>
 
+  <!-- Mobile bottom nav (visible only on small screens) -->
+  <nav class="seller-mobile-nav" style="display:none;">
+    <a href="#" onclick="showSection('overview')" id="mob-overview">
+      <span class="icon">🏠</span>Overview
+    </a>
+    <a href="#" onclick="showSection('my-listings')" id="mob-my-listings">
+      <span class="icon">🚗</span>Listings
+    </a>
+    <a href="#" onclick="showSection('new-listing')" id="mob-new-listing">
+      <span class="icon">➕</span>Post
+    </a>
+    <a href="#" onclick="showSection('verify')" id="mob-verify">
+      <span class="icon">✅</span>Verify
+    </a>
+    <a href="#" onclick="showSection('bank-details')" id="mob-bank-details">
+      <span class="icon">🏦</span>Bank
+    </a>
+  </nav>
+
   <!-- MAIN CONTENT -->
   <main class="dashboard-main" id="dashboardMain">
 
@@ -400,6 +419,10 @@ function showSection(name, arg) {
   });
   if (arg !== undefined) window._bbSectionArg = arg;
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  // Update mobile bottom nav active state
+  document.querySelectorAll('.seller-mobile-nav a').forEach(a => a.classList.remove('active'));
+  const mobLink = document.getElementById('mob-' + name);
+  if (mobLink) mobLink.classList.add('active');
   const map = { overview:'overview', 'my-listings':'my-listings', 'new-listing':'new-listing', featured:'featured', verify:'verify' };
   if (map[name]) {
     document.querySelectorAll('.sidebar-link').forEach(l => {
